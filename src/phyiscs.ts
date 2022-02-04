@@ -1,9 +1,8 @@
 import { Vector2, mathv2 } from './vector2'
-import { clamp, moveTowards } from './util'
+import { clamp } from './util'
 import * as PIXI from 'pixi.js'
 
-const ENTITY_DRAG = 0.28
-const ENTITY_MAX_VELOCITY = 10
+const DRAG_SCALE = 0.01
 
 export class PhysicsBody extends PIXI.Container {
   public radius: number
@@ -18,40 +17,27 @@ export class PhysicsBody extends PIXI.Container {
   }
 
   public tick (delta: number, world: PhysicsWorld): void {
-    if (Math.abs(this.acceleration.y) < 0.01) {
-      this.velocity.y = moveTowards(this.velocity.y, 0.0, ENTITY_DRAG * delta)
+    const drag = {
+      x: DRAG_SCALE * this.velocity.x ** 2 * Math.sign(this.velocity.x),
+      y: DRAG_SCALE * this.velocity.y ** 2 * Math.sign(this.velocity.y)
     }
 
-    if (Math.abs(this.acceleration.x) < 0.01) {
-      this.velocity.x = moveTowards(this.velocity.x, 0.0, ENTITY_DRAG * delta)
+    this.acceleration.x -= drag.x * delta
+    this.acceleration.y -= drag.y * delta
+
+    this.velocity.x += this.acceleration.x * delta
+    this.velocity.y += this.acceleration.y * delta
+
+    if (Math.abs(this.velocity.x) < 0.04) {
+      this.velocity.x = 0
     }
 
-    const angle = mathv2.angle(this.acceleration, this.velocity)
-
-    if (Math.abs(angle) > 1.5708) {
-      // apply acceleration as drag when acceleration opposes velocity
-      const dragAcceleration = mathv2.normalize(this.acceleration)
-      dragAcceleration.x *= ENTITY_DRAG
-      dragAcceleration.y *= ENTITY_DRAG
-
-      this.velocity.x += dragAcceleration.x * delta
-      this.velocity.y += dragAcceleration.y * delta
-    } else {
-      // apply acceleration
-      this.velocity.x += this.acceleration.x * delta
-      this.velocity.y += this.acceleration.y * delta
+    if (Math.abs(this.velocity.y) < 0.04) {
+      this.velocity.y = 0
     }
 
-    // Apply Velocity
     this.position.x += this.velocity.x * delta
     this.position.y += this.velocity.y * delta
-
-    // Limit Velocity
-    if (mathv2.length(this.velocity) > ENTITY_MAX_VELOCITY) {
-      this.velocity = mathv2.normalize(this.velocity)
-      this.velocity.x *= ENTITY_MAX_VELOCITY
-      this.velocity.y *= ENTITY_MAX_VELOCITY
-    }
 
     // Check For collision with all bodies
     for (const body of world.bodies) {

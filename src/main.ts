@@ -1,12 +1,13 @@
 import './style.css'
 import * as PIXI from 'pixi.js'
-import { isKeyDown } from './input'
+import { isKeyDown, useMousePos } from './input'
 import { PhysicsBody, PhysicsWorld } from './phyiscs'
 import { mathv2 } from './vector2'
 
-const PLAYER_ACCELERATION = 0.1
+const PLAYER_ACCELERATION = 1
 
 const app = new PIXI.Application()
+const { getMousePos } = useMousePos(app.stage)
 
 document.body.appendChild(app.view)
 
@@ -39,18 +40,36 @@ class Player extends PhysicsBody {
     this.acceleration.x = input.x * PLAYER_ACCELERATION * delta
     this.acceleration.y = input.y * PLAYER_ACCELERATION * delta
 
+    const pos = getMousePos()
+    const rot = Math.atan2(pos.y - this.position.y, pos.x - this.position.x)
+    this.rotation = rot
+
     super.tick(delta, world)
   }
 }
 
-const player = new Player(100)
+const player = new Player(20)
 player.addChild(
   new PIXI.Graphics()
     .beginFill(0x00ff00)
-    .drawPolygon([new PIXI.Point(0, 0), new PIXI.Point(50, 100), new PIXI.Point(-50, 100)])
+    .drawPolygon([new PIXI.Point(0, 0), new PIXI.Point(1, 0.5), new PIXI.Point(0, 1)])
 )
+player.pivot.x = 0.5
+player.pivot.y = 0.5
+player.scale.x = 30
+player.scale.y = 30
 player.position.x = 100
+app.stage.interactive = true
 app.stage.addChild(player)
+
+
+const otherBody = new PhysicsBody(30)
+otherBody.addChild(new PIXI.Graphics().beginFill(0xffffff).drawCircle(0, 0, 30))
+otherBody.position.x = 200
+otherBody.position.y = 200
+
+app.stage.addChild(otherBody)
+world.bodies.push(otherBody)
 world.bodies.push(player)
 
 app.ticker.add((delta: number) => {
