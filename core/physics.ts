@@ -1,64 +1,14 @@
 import { Vector2, mathv2 } from './vector2'
 import { clamp } from './util'
-import * as PIXI from 'pixi.js'
 
-const DRAG_SCALE = 0.01
+const DRAG_SCALE = 0.02
 
-export class PhysicsBody extends PIXI.Container {
-  public radius: number
-  public velocity: Vector2
-  public acceleration: Vector2
-
-  public constructor (radius: number) {
-    super()
-    this.radius = radius
-    this.velocity = { x: 0, y: 0 }
-    this.acceleration = { x: 0, y: 0 }
-  }
-
-  public tick (delta: number, world: PhysicsWorld): void {
-    const drag = {
-      x: DRAG_SCALE * this.velocity.x ** 2 * Math.sign(this.velocity.x),
-      y: DRAG_SCALE * this.velocity.y ** 2 * Math.sign(this.velocity.y)
-    }
-
-    this.acceleration.x -= drag.x * delta
-    this.acceleration.y -= drag.y * delta
-
-    this.velocity.x += this.acceleration.x * delta
-    this.velocity.y += this.acceleration.y * delta
-
-    if (Math.abs(this.velocity.x) < 0.04) {
-      this.velocity.x = 0
-    }
-
-    if (Math.abs(this.velocity.y) < 0.04) {
-      this.velocity.y = 0
-    }
-
-    this.position.x += this.velocity.x * delta
-    this.position.y += this.velocity.y * delta
-
-    // Check For collision with all bodies
-    for (const body of world.bodies) {
-      if (body !== this) {
-        const colliding = isCircleVsCircleCollision(
-          this.position,
-          body.position,
-          this.radius,
-          body.radius)
-
-        if (colliding) {
-          resolveCircleVsCircleCollision(
-            this.position,
-            body.position,
-            this.radius,
-            body.radius
-          )
-        }
-      }
-    }
-  }
+export interface PhysicsBody {
+  position: Vector2
+  rotation: number
+  radius: number
+  velocity: Vector2
+  acceleration: Vector2
 }
 
 export interface PhysicsWorld {
@@ -130,4 +80,50 @@ export function resolveCircleVsRectangleCollision (
   const finalPos = mathv2.subtract(circlePos, temp)
   circlePos.x = finalPos.x
   circlePos.y = finalPos.y
+}
+
+export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, delta : number) {
+  const drag = {
+    x: DRAG_SCALE * phyBody.velocity.x ** 2 * Math.sign(phyBody.velocity.x),
+    y: DRAG_SCALE * phyBody.velocity.y ** 2 * Math.sign(phyBody.velocity.y)
+  }
+
+  phyBody.acceleration.x -= drag.x * delta
+  phyBody.acceleration.y -= drag.y * delta
+
+  phyBody.velocity.x += phyBody.acceleration.x * delta
+  phyBody.velocity.y += phyBody.acceleration.y * delta
+
+  if (Math.abs(phyBody.velocity.x) < 0.04) {
+    phyBody.velocity.x = 0
+  }
+
+  if (Math.abs(phyBody.velocity.y) < 0.04) {
+    phyBody.velocity.y = 0
+  }
+
+  phyBody.position.x += phyBody.velocity.x * delta
+  phyBody.position.y += phyBody.velocity.y * delta
+
+  // console.log(phyBody)
+
+  // Check For collision with all bodies
+  for (const body of world.bodies) {
+    if (body !== phyBody) {
+      const colliding = isCircleVsCircleCollision(
+        phyBody.position,
+        body.position,
+        phyBody.radius,
+        body.radius)
+
+      if (colliding) {
+        resolveCircleVsCircleCollision(
+          phyBody.position,
+          body.position,
+          phyBody.radius,
+          body.radius
+        )
+      }
+    }
+  }
 }

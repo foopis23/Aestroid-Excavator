@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js'
-import { Vector2 } from './vector2'
+import { Vector2 } from '../../core/vector2'
 const keyMap: Record<string, boolean> = {}
 
 window.addEventListener('keydown', (e) => {
