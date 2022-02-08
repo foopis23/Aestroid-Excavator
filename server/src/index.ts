@@ -2,7 +2,7 @@ import { Socket, Server } from 'socket.io'
 import { PhysicsBody, PhysicsWorld, tickPhysicsBody } from '../../core/physics'
 import { Vector2 } from '../../core/vector2'
 
-const PLAYER_ACCELERATION = 1000
+const PLAYER_INPUT_ACCELERATION = 1000
 
 interface Player extends PhysicsBody {
   id: string,
@@ -51,7 +51,8 @@ io.on("connection", (socket: Socket) => {
     rotation: 0,
     radius: 20,
     moveInput: {x: 0, y: 0},
-    lookRot: 0
+    lookRot: 0,
+    dragScale: 0.8
   }
 
   // emit initial data
@@ -82,8 +83,8 @@ const physicsLoop = () => {
   lastPhysicsUpdate = now
 
   for (let player of Object.values(world.players)) {
-    player.acceleration.x = player.moveInput.x * PLAYER_ACCELERATION
-    player.acceleration.y = player.moveInput.y * PLAYER_ACCELERATION
+    player.acceleration.x = player.moveInput.x * PLAYER_INPUT_ACCELERATION
+    player.acceleration.y = player.moveInput.y * PLAYER_INPUT_ACCELERATION
     player.rotation = player.lookRot
   }
   

@@ -1,14 +1,13 @@
 import { Vector2, mathv2 } from './vector2'
 import { clamp } from './util'
 
-const DRAG_SCALE = 0.8
-
 export interface PhysicsBody {
   position: Vector2
   rotation: number
   radius: number
   velocity: Vector2
   acceleration: Vector2
+  dragScale: number
 }
 
 export interface PhysicsWorld {
@@ -82,8 +81,8 @@ export function resolveCircleVsRectangleCollision (
 
 export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, delta : number) {
   const drag = {
-    x: DRAG_SCALE * phyBody.velocity.x ** 2 * Math.sign(phyBody.velocity.x),
-    y: DRAG_SCALE * phyBody.velocity.y ** 2 * Math.sign(phyBody.velocity.y)
+    x: phyBody.dragScale * phyBody.velocity.x ** 2 * Math.sign(phyBody.velocity.x),
+    y: phyBody.dragScale * phyBody.velocity.y ** 2 * Math.sign(phyBody.velocity.y)
   }
 
   phyBody.acceleration.x -= drag.x * delta
