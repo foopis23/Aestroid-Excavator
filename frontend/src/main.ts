@@ -7,12 +7,12 @@ import { lerp } from '../../core/util'
 
 const host = prompt('Enter Host Address')
 const players : Record<string, Player> = {}
-const clientDelay = 50
-const fps = 60
-const bufferSize = 1.5
+const clientDelay = 100
 const clientSmoothing = 25
 let serverTime = 0.1;
 let clientTime = 0.1;
+let lastPacketTime = Date.now()
+
 
 const app = new PIXI.Application()
 app.stage.interactive = true
@@ -52,7 +52,7 @@ class Player extends PIXI.Container {
   }
 
   public tick(delta: number): void {
-    let currentTime = clientTime;
+    let currentTime = clientTime + (Date.now()-lastPacketTime);
     let lastUpdate;
     let targetUpdate;
 
@@ -68,19 +68,23 @@ class Player extends PIXI.Container {
     }
 
     if (lastUpdate && targetUpdate) {
-      let step = (targetUpdate.time - currentTime) / (targetUpdate.time - lastUpdate.time)
+      let difference = targetUpdate.time - currentTime;
+      let maxDiff = (targetUpdate.time - lastUpdate.time)
+      let timePoint = ((maxDiff - difference)/maxDiff)
       let pos = {x: 0, y: 0}
       let rot = 0
-      pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, step )
-      pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, step )
-      rot = lerp(lastUpdate.rotation, targetUpdate.rotation, step)
+
+      pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )
+      pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint )
+      rot = lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
       
       //client smoothing
       this.position.x = lerp(this.position.x, pos.x, clientSmoothing * delta)
       this.position.y = lerp(this.position.y, pos.y, clientSmoothing * delta)
       this.rotation = lerp(this.rotation, rot, clientSmoothing * delta)
-    } else {
-      console.log("no pos")
+      // this.position.x = pos.x
+      // this.position.y = pos.y
+      // this.rotation = rot
     }
   }
 }
@@ -103,6 +107,7 @@ socket.on('playerLeft', (id: string) => {
 socket.on('playersSync', (data : PlayerSyncPacket) => {
   serverTime = data.time
   clientTime = serverTime - clientDelay
+  lastPacketTime = Date.now()
 
   for (const playerData of data.players) {
     const { id } = playerData
@@ -114,13 +119,13 @@ socket.on('playersSync', (data : PlayerSyncPacket) => {
 
     players[id].serverUpdates.push({...playerData, time: data.time})
 
-    if (players[id].serverUpdates.length > bufferSize * fps) {
-      players[id].serverUpdates.splice(0,1)
+    while(players[id].serverUpdates[0].time < clientTime && players[id].serverUpdates[1].time < clientTime) {
+      players[id].serverUpdates.splice(0, 1)
     }
   }
 })
 
-const TARGET_FPMS =  PIXI.settings.TARGET_FPMS ?? 0.06
+const TARGET_FPMS = PIXI.settings.TARGET_FPMS ?? 0.06
 app.ticker.add((deltaFrame: number) => {
   const delta = (deltaFrame / TARGET_FPMS) / 1000
 

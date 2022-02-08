@@ -72,12 +72,14 @@ io.on("connection", (socket: Socket) => {
 
 io.listen(3001)
 
-const targetTickRate = 60
-const tickRate = 1000/targetTickRate
-let lastUpdate = Date.now()
-setInterval(() => {
+const physicsTickRate = 1000/60
+const networkTickRate = 45
+let lastPhysicsUpdate = Date.now()
+
+const physicsLoop = () => {
   const now = Date.now()
-  const delta = (now - lastUpdate ) / 1000
+  const delta = (now - lastPhysicsUpdate ) / 1000
+  lastPhysicsUpdate = now
 
   for (let player of Object.values(world.players)) {
     player.acceleration.x = player.moveInput.x * PLAYER_ACCELERATION
@@ -88,12 +90,14 @@ setInterval(() => {
   for(let body of world.bodies) {
     tickPhysicsBody(body, world, delta)
   }
+}
 
+const clientUpdateLoop = () => {
   io.emit('playersSync', {
     players: Object.values(world.players).map((player) => {return {id: player.id, position: player.position, rotation: player.rotation}}),
     time: Date.now()
   })
+}
+setInterval(physicsLoop, physicsTickRate)
 
-  lastUpdate = now
-}, tickRate)
-
+setInterval(clientUpdateLoop, networkTickRate)
