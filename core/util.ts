@@ -12,18 +12,6 @@ export function moveTowards (current: number, towards: number, maxStep: number):
   return current + (direction * maxStep)
 }
 
-export class Queue<T> {
-  private data : T[]
-
-  public get length() : number {
-    return this.data.length
-  }
-
-  public push(v: T) {
-    this.data.push(v)
-  }
-
-  public pop(): T {
-    return this.data.shift()
-  }
+export function lerp(start: number, end: number, step: number) {
+  return clamp((end-start) * step + start, start, end)
 }

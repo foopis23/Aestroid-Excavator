@@ -93,9 +93,10 @@ setInterval(() => {
     tickPhysicsBody(body, world, delta)
   }
 
-  io.emit('playersSync', Object.values(world.players).map((player) => {
-    return {id: player.id, position: player.position, rotation: player.rotation}
-  }))
+  io.emit('playersSync', {
+    players: Object.values(world.players).map((player) => {return {id: player.id, position: player.position, rotation: player.rotation, time: Date.now()}}),
+    time: Date.now()
+  })
 
   lastUpdate = now
 }, tickRate)
