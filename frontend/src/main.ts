@@ -7,9 +7,9 @@ import { lerp } from '../../core/util'
 
 const host = prompt('Enter Host Address')
 const players : Record<string, Player> = {}
-const clientDelay = 100
+const clientDelay = 50
 const fps = 60
-const bufferSize = 30
+const bufferSize = 1
 let serverTime = 0.1;
 let clientTime = 0.1;
 
@@ -51,7 +51,7 @@ class Player extends PIXI.Container {
   }
 
   public tick(delta: number): void {
-    let currentTime = clientTime;
+    let currentTime = Date.now() - clientDelay;
     let lastUpdate;
     let targetUpdate;
 
@@ -59,7 +59,7 @@ class Player extends PIXI.Container {
       let tempLast = this.serverUpdates[i]
       let tempTarget = this.serverUpdates[i+1]
 
-      if (currentTime > tempLast.time && currentTime <= tempTarget.time) {
+      if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
         lastUpdate = tempLast
         targetUpdate = tempTarget
         break
@@ -78,6 +78,8 @@ class Player extends PIXI.Container {
       this.position.x = lerp(this.position.x, pos.x, 25 * 0.016 * delta)
       this.position.y = lerp(this.position.y, pos.y, 25 * 0.016 * delta)
       this.rotation = lerp(this.rotation, rot, 25 * 0.016 * delta)
+    } else {
+      console.log("no pos")
     }
   }
 }

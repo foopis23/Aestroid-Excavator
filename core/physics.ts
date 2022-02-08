@@ -27,20 +27,18 @@ export function isCircleVsCircleCollision (
 }
 
 export function resolveCircleVsCircleCollision (
-  pos1: Vector2,
-  pos2: Vector2,
-  radius1: number,
-  radius2: number
+  a: PhysicsBody,
+  b: PhysicsBody
 ): void {
-  const distance = mathv2.distance(pos1, pos2)
-  const radiiSum = radius1 + radius2
-  const xDiff = pos1.x - pos2.x
-  const yDiff = pos1.y - pos2.y
+  const distance = mathv2.distance(a.position, b.position)
+  const radiiSum = a.radius + b.radius
+  const xDiff = a.position.x - b.position.x
+  const yDiff = a.position.y - b.position.y
   const xUnit = xDiff / distance
   const yUnit = yDiff / distance
 
-  pos1.x = pos2.x + radiiSum * xUnit
-  pos1.y = pos2.y + radiiSum * yUnit
+  a.position.x = b.position.x + radiiSum * xUnit
+  a.position.y = b.position.y + radiiSum * yUnit
 }
 
 export function isCircleVsRectangleCollision (
@@ -118,10 +116,8 @@ export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, del
 
       if (colliding) {
         resolveCircleVsCircleCollision(
-          phyBody.position,
-          body.position,
-          phyBody.radius,
-          body.radius
+          phyBody,
+          body
         )
       }
     }

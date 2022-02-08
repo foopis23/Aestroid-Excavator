@@ -23,10 +23,6 @@ class ServerWorld implements PhysicsWorld {
     return [...Object.values(this.players), ...this._bodies]
   }
 
-  public set bodies(v: PhysicsBody[]) {
-    // do nothing
-  }
-
   public addBody(body: PhysicsBody) {
     this._bodies.push(body)
   }
@@ -94,7 +90,7 @@ setInterval(() => {
   }
 
   io.emit('playersSync', {
-    players: Object.values(world.players).map((player) => {return {id: player.id, position: player.position, rotation: player.rotation, time: Date.now()}}),
+    players: Object.values(world.players).map((player) => {return {id: player.id, position: player.position, rotation: player.rotation}}),
     time: Date.now()
   })
 
