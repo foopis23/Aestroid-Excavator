@@ -8,7 +8,7 @@ import { lerp } from '../../core/util'
 const host = prompt('Enter Host Address')
 const players : Record<string, Player> = {}
 const clientDelay = 100
-const clientSmoothing = 25
+const clientSmoothing = 7
 let serverTime = 0.1;
 let clientTime = 0.1;
 let lastPacketTime = Date.now()
