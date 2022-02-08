@@ -2,7 +2,7 @@ import { Socket, Server } from 'socket.io'
 import { PhysicsBody, PhysicsWorld, tickPhysicsBody } from '../../core/physics'
 import { Vector2 } from '../../core/vector2'
 
-const PLAYER_ACCELERATION = 0.5
+const PLAYER_ACCELERATION = 1000
 
 interface Player extends PhysicsBody {
   id: string,
@@ -77,11 +77,11 @@ const tickRate = 1000/targetTickRate
 let lastUpdate = Date.now()
 setInterval(() => {
   const now = Date.now()
-  const delta = (now - lastUpdate ) / tickRate
+  const delta = (now - lastUpdate ) / 1000
 
   for (let player of Object.values(world.players)) {
-    player.acceleration.x = player.moveInput.x * PLAYER_ACCELERATION * delta
-    player.acceleration.y = player.moveInput.y * PLAYER_ACCELERATION * delta
+    player.acceleration.x = player.moveInput.x * PLAYER_ACCELERATION
+    player.acceleration.y = player.moveInput.y * PLAYER_ACCELERATION
     player.rotation = player.lookRot
   }
   

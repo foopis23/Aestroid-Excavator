@@ -9,7 +9,8 @@ const host = prompt('Enter Host Address')
 const players : Record<string, Player> = {}
 const clientDelay = 50
 const fps = 60
-const bufferSize = 1
+const bufferSize = 1.5
+const clientSmoothing = 25
 let serverTime = 0.1;
 let clientTime = 0.1;
 
@@ -51,7 +52,7 @@ class Player extends PIXI.Container {
   }
 
   public tick(delta: number): void {
-    let currentTime = Date.now() - clientDelay;
+    let currentTime = clientTime;
     let lastUpdate;
     let targetUpdate;
 
@@ -75,9 +76,9 @@ class Player extends PIXI.Container {
       rot = lerp(lastUpdate.rotation, targetUpdate.rotation, step)
       
       //client smoothing
-      this.position.x = lerp(this.position.x, pos.x, 25 * 0.016 * delta)
-      this.position.y = lerp(this.position.y, pos.y, 25 * 0.016 * delta)
-      this.rotation = lerp(this.rotation, rot, 25 * 0.016 * delta)
+      this.position.x = lerp(this.position.x, pos.x, clientSmoothing * delta)
+      this.position.y = lerp(this.position.y, pos.y, clientSmoothing * delta)
+      this.rotation = lerp(this.rotation, rot, clientSmoothing * delta)
     } else {
       console.log("no pos")
     }
@@ -119,7 +120,10 @@ socket.on('playersSync', (data : PlayerSyncPacket) => {
   }
 })
 
-app.ticker.add((delta: number) => {
+const TARGET_FPMS =  PIXI.settings.TARGET_FPMS ?? 0.06
+app.ticker.add((deltaFrame: number) => {
+  const delta = (deltaFrame / TARGET_FPMS) / 1000
+
   if (players[socket.id]) {
     let moveInput = { x: 0, y: 0 }
 
@@ -148,7 +152,6 @@ app.ticker.add((delta: number) => {
     socket.emit('playerInput', {moveInput, lookRot})
   }
 
-  // console.log(delta)
   for (let playerId of Object.keys(players)) {
       players[playerId].tick(delta)
   }

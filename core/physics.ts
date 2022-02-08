@@ -1,7 +1,7 @@
 import { Vector2, mathv2 } from './vector2'
 import { clamp } from './util'
 
-const DRAG_SCALE = 0.02
+const DRAG_SCALE = 0.8
 
 export interface PhysicsBody {
   position: Vector2
