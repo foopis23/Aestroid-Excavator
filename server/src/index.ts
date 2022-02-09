@@ -8,6 +8,7 @@ import {
   PlayerSyncData
 } from '../../core/net'
 
+const port = 3001
 const playerInputAcceleration = 1000
 const physicsTickRate = 1000/60
 const networkTickRate = 45
@@ -60,4 +61,5 @@ const clientUpdateLoop = () => {
 setInterval(clientUpdateLoop, networkTickRate)
 
 
-io.listen(3001)
+io.listen(port)
+console.log(`Server is listening at ws://localhost:${3001}`)

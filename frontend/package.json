@@ -8,8 +8,8 @@
   },
   "devDependencies": {
     "ts-standard": "^11.0.0",
-    "typescript": "^4.4.4",
-    "vite": "^2.7.2"
+    "typescript": "^4.5.5",
+    "vite": "^2.8.0"
   },
   "dependencies": {
     "ecsy": "^0.4.2",
