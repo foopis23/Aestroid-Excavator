@@ -17,20 +17,20 @@ const io = new Server({
 // Setup Web Socket
 io.on("connection", (socket: Socket) => {
   // setup intial data
-  game.playerJoin(socket.id)
+  game.onPlayerJoin(socket.id)
 
   // emit initial data
   io.emit('playerJoin', socket.id)
 
   // handle disconnect
   socket.on('disconnect', () => {
-    game.playerLeave(socket.id)
+    game.onPlayerLeave(socket.id)
     io.emit('playerLeft', socket.id)
   })
 
   // handle input
   socket.on('playerInput', (input) => {
-    game.playerInput(socket.id, input)
+    game.onPlayerInput(socket.id, input)
   })
 })
 

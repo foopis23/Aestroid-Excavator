@@ -11,7 +11,7 @@ export class Game {
     setInterval(() => this.physicsLoop(), tickRateMS)
   }
 
-  public playerJoin(id : string) {
+  public onPlayerJoin(id : string) {
     this.world.players[id] = {
       id,
       position: {x: 0, y: 0},
@@ -25,11 +25,11 @@ export class Game {
     }
   }
 
-  public playerLeave(id) {
+  public onPlayerLeave(id) {
     delete this.world.players[id]
   }
 
-  public playerInput(id, input) {
+  public onPlayerInput(id, input) {
     this.world.players[id].moveInput = input.moveInput
     this.world.players[id].lookRot = input.lookRot
   }
