@@ -102,8 +102,6 @@ export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, del
   phyBody.position.x += phyBody.velocity.x * delta
   phyBody.position.y += phyBody.velocity.y * delta
 
-  // console.log(phyBody)
-
   // Check For collision with all bodies
   for (const body of world.bodies) {
     if (body !== phyBody) {
