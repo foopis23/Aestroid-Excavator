@@ -12,6 +12,7 @@
     "vite": "^2.8.0"
   },
   "dependencies": {
+    "@types/offscreencanvas": "^2019.6.4",
     "ecsy": "^0.4.2",
     "pixi.js": "^6.2.2",
     "socket.io-client": "^4.4.1"
