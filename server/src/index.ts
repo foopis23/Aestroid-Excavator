@@ -1,5 +1,12 @@
 import { Socket, Server } from 'socket.io'
 import { Game } from './game'
+import { 
+  ClientToServerEvents,
+  ServerToClientEvents,
+  InterServerEvents,
+  SocketData, 
+  PlayerSyncData
+} from '../../core/net'
 
 const playerInputAcceleration = 1000
 const physicsTickRate = 1000/60
@@ -7,7 +14,7 @@ const networkTickRate = 45
 
 const game = new Game(physicsTickRate, playerInputAcceleration)
 
-const io = new Server({
+const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>({
   cors: {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST']
@@ -36,8 +43,17 @@ io.on("connection", (socket: Socket) => {
 
 // Network Sync Loop
 const clientUpdateLoop = () => {
+  const players : PlayerSyncData[] = Object.values(game.world.players)
+    .map((player) => {
+      return {
+        id: player.id,
+        position: player.position,
+        rotation: player.rotation
+      }
+    })
+
   io.emit('playersSync', {
-    players: Object.values(game.world.players).map((player) => {return {id: player.id, position: player.position, rotation: player.rotation}}),
+    players,
     time: Date.now()
   })
 }

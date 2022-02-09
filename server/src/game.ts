@@ -1,5 +1,6 @@
 import { World } from './types'
 import { tickPhysicsBody } from '../../core/physics'
+import { PlayerInputPacket } from '../../core/net'
 
 export class Game {
   public readonly world: World
@@ -25,11 +26,11 @@ export class Game {
     }
   }
 
-  public onPlayerLeave(id) {
+  public onPlayerLeave(id: string) {
     delete this.world.players[id]
   }
 
-  public onPlayerInput(id, input) {
+  public onPlayerInput(id: string, input: PlayerInputPacket) {
     this.world.players[id].moveInput = input.moveInput
     this.world.players[id].lookRot = input.lookRot
   }
