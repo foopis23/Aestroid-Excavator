@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "tsc",
-    "start": "tsc && node dist/index.js"
+    "start": "tsc && node dist/server/src/index.js"
   },
   "author": "",
   "license": "ISC",
