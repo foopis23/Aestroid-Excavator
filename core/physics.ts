@@ -28,7 +28,7 @@ export function isCircleVsCircleCollision (
 export function resolveCircleVsCircleCollision (
   a: PhysicsBody,
   b: PhysicsBody
-): void {
+): Vector2 {
   const distance = mathv2.distance(a.position, b.position)
   const radiiSum = a.radius + b.radius
   const xDiff = a.position.x - b.position.x
@@ -36,8 +36,10 @@ export function resolveCircleVsCircleCollision (
   const xUnit = xDiff / distance
   const yUnit = yDiff / distance
 
-  a.position.x = b.position.x + radiiSum * xUnit
-  a.position.y = b.position.y + radiiSum * yUnit
+  return {
+    x: b.position.x + radiiSum * xUnit,
+    y: b.position.y + radiiSum * yUnit
+  }
 }
 
 export function isCircleVsRectangleCollision (
@@ -61,7 +63,7 @@ export function resolveCircleVsRectangleCollision (
   circleRadius: number,
   rectPos: Vector2,
   rectSize: Vector2
-): void {
+): Vector2 {
   const nearestPoint = {
     x: clamp(circlePos.x, rectPos.x, rectPos.x + rectSize.x),
     y: clamp(circlePos.y, rectPos.y, rectPos.y + rectSize.y)
@@ -75,8 +77,7 @@ export function resolveCircleVsRectangleCollision (
   temp.y = temp.y * overlap
 
   const finalPos = mathv2.subtract(circlePos, temp)
-  circlePos.x = finalPos.x
-  circlePos.y = finalPos.y
+  return finalPos;
 }
 
 export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, delta : number) {
@@ -112,7 +113,7 @@ export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, del
         body.radius)
 
       if (colliding) {
-        resolveCircleVsCircleCollision(
+        phyBody.position = resolveCircleVsCircleCollision(
           phyBody,
           body
         )
