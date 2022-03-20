@@ -8,12 +8,13 @@ import {
 } from '../../core/net'
 import { onPlayerInput, onPlayerJoin, onPlayerLeave, world } from '../../core/game'
 
-const port = 3001
+const port = 9500
+const origin = 'https://web-game.jamac.dev'
 const networkTickRate = 45
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>({
   cors: {
-    origin: 'http://localhost:3000',
+    origin: origin,
     methods: ['GET', 'POST']
   }
 })
