@@ -1,3 +1,9 @@
+require(`dotenv-defaults`).config({
+  path: './.env',
+  encoding: 'utf8',
+  defaults: './.env.defaults' // This is new
+})
+
 import { Socket, Server } from 'socket.io'
 import { 
   ClientToServerEvents,
@@ -8,8 +14,8 @@ import {
 } from '../../core/net'
 import { onPlayerInput, onPlayerJoin, onPlayerLeave, world } from '../../core/game'
 
-const port = 9500
-const origin = 'https://web-game.jamac.dev'
+const port: number = (process.env.PORT)? parseInt(process.env.PORT) : 9500
+const origin: string = process.env.CORS_URL
 const networkTickRate = 45
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>({
@@ -59,4 +65,4 @@ setInterval(clientUpdateLoop, networkTickRate)
 
 
 io.listen(port)
-console.log(`Server is listening at ws://localhost:${3001}`)
+console.log(`Server is listening at ws://localhost:${port}`)
