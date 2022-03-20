@@ -13,5 +13,5 @@ export function moveTowards (current: number, towards: number, maxStep: number):
 }
 
 export function lerp(start: number, end: number, step: number) {
-  return clamp((end-start) * step + start, start, end)
+  return start * (1 - step) + end  * step
 }
