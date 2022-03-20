@@ -5,7 +5,7 @@ import { PlayerUpdateQueueData } from './types';
 export class PlayerEntity extends PIXI.Container {
   public serverUpdates : PlayerUpdateQueueData[];
 
-  constructor(private readonly clientSmoothing : number) {
+  constructor(private readonly clientSmoothing : number, private readonly isLocalPlayer: boolean) {
     super()
     this.addChild(
       new PIXI.Graphics()

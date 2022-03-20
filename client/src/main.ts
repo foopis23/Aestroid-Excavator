@@ -38,7 +38,7 @@ socket.on("connect", () => {
 });
 
 socket.on('playerJoin', (id) => {
-  players[id] = new PlayerEntity(clientSmoothing)
+  players[id] = new PlayerEntity(clientSmoothing, id == socket.id)
   app.stage.addChild(players[id])
 })
 
@@ -56,7 +56,7 @@ socket.on('playersSync', (data) => {
     const { id } = playerData
 
     if (players[id] == undefined) {
-      players[id] = new PlayerEntity(clientSmoothing)
+      players[id] = new PlayerEntity(clientSmoothing, id == socket.id)
       app.stage.addChild(players[id])
     }
 
@@ -73,6 +73,7 @@ socket.on('playersSync', (data) => {
 app.ticker.add((deltaFrame: number) => {
   const delta = (deltaFrame / TARGET_FPMS) / 1000
 
+  // if local player, poll input+
   if (players[socket.id]) {
     let moveInput = { x: 0, y: 0 }
 
