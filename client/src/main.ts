@@ -26,7 +26,7 @@ document.body.appendChild(app.view)
 const { getMousePos } = useMousePos(app.stage)
 
 // setup websocket
-const socket: GameSocket = io(`ws://${host}`);
+const socket: GameSocket = io(`wss://${host}`);
 socket.serverTime = 0
 socket.clientTime = 0
 socket.lastPacketTime = Date.now()
