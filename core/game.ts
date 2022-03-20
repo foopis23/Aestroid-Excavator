@@ -1,4 +1,4 @@
-import { World } from '../server/src/types'
+import { World } from './world'
 import { tickPhysicsBody } from './physics'
 import { PlayerInputPacket } from './net'
 

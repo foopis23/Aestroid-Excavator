@@ -1,11 +1,5 @@
-import { PhysicsBody, PhysicsWorld } from '../../core/physics'
-import { Vector2 } from '../../core/vector2'
-
-export interface Player extends PhysicsBody {
-  id: string,
-  moveInput: Vector2,
-  lookRot: number
-}
+import { PhysicsBody, PhysicsWorld } from './physics'
+import { Player } from './player'
 
 export class World implements PhysicsWorld {
   public players: Record<string, Player>
