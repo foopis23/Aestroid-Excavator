@@ -82,38 +82,40 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
   public tick(delta: number, currentTime: number): void {
     if (this.isLocalPlayer) {
       this.pollInput()
-    }
-
-    let lastUpdate;
-    let targetUpdate;
-
-    for (let i=0; i < this.serverUpdates.length -1; i++) {
-      let tempLast = this.serverUpdates[i]
-      let tempTarget = this.serverUpdates[i+1]
-
-      if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
-        lastUpdate = tempLast
-        targetUpdate = tempTarget
-        break
+    } else {
+      let lastUpdate;
+      let targetUpdate;
+  
+      for (let i=0; i < this.serverUpdates.length -1; i++) {
+        let tempLast = this.serverUpdates[i]
+        let tempTarget = this.serverUpdates[i+1]
+  
+        if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
+          lastUpdate = tempLast
+          targetUpdate = tempTarget
+          break
+        }
       }
-    }
-
-    if (lastUpdate && targetUpdate) {
-      const difference = targetUpdate.time - currentTime;
-      const maxDiff = (targetUpdate.time - lastUpdate.time)
-      const timePoint = ((maxDiff - difference)/maxDiff)
-
-      let pos = {x: 0, y: 0}
-      let rot = 0
-
-      pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )
-      pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint )
-      rot = lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
-      
-      //client smoothing
-      this.position.x = lerp(this.position.x, pos.x, this.clientSmoothing * delta)
-      this.position.y = lerp(this.position.y, pos.y, this.clientSmoothing * delta)
-      this.rotation = lerp(this.rotation, rot, this.clientSmoothing * delta)
+  
+      if (lastUpdate && targetUpdate) {
+        const difference = targetUpdate.time - currentTime;
+        const maxDiff = (targetUpdate.time - lastUpdate.time)
+        const timePoint = ((maxDiff - difference)/maxDiff)
+  
+        let pos = {x: 0, y: 0}
+        let rot = 0
+  
+        pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )
+        pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint )
+        rot = lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
+        
+        //client smoothing
+        this.position.x = lerp(this.position.x, pos.x, this.clientSmoothing * delta)
+        this.position.y = lerp(this.position.y, pos.y, this.clientSmoothing * delta)
+        this.rotation = lerp(this.rotation, rot, this.clientSmoothing * delta)
+      }
+  
+      console.log(this.position.x, this.position.y)
     }
   }
 }
