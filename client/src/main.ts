@@ -4,7 +4,7 @@ import { useMousePos } from './input'
 import { io } from "socket.io-client";
 import { PlayerEntity } from './player';
 import { GameSocket } from './types';
-import { onPlayerInput, onPlayerJoin, onPlayerLeave, physicsLoop, world } from '../../core/game'
+import { onPlayerJoin, onPlayerLeave, physicsLoop, world } from '../../core/game'
 
 // configurable
 const clientDelay = 100
@@ -31,7 +31,7 @@ socket.lastPacketTime = Date.now()
 
 // websocket connect
 socket.on("connect", () => {
-  console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+  // console.log(socket.id); // x8WIv7-mJelg7on_ALbx
 });
 
 socket.on('playerJoin', (id) => {
@@ -81,14 +81,17 @@ app.ticker.add((deltaFrame: number) => {
     const currentTime = socket.clientTime + (Date.now() - socket.lastPacketTime)
     for (let playerId of Object.keys(world.players)) {
       const player = world.players[playerId] as PlayerEntity
-      player.tick(delta, currentTime)
+      player.tick(delta, currentTime, world)
     }
   }
 
   // if local player, push current input to server
   if (world.players[socket.id]) {
-    const moveInput = world.players[socket.id].moveInput;
-    const lookRot = world.players[socket.id].lookRot;
-    socket.emit('playerInput', { moveInput, lookRot })
+    const player = world.players[socket.id] as PlayerEntity
+    const lastInput = player.inputs[player.inputs.length - 1]
+    
+    if (lastInput) {
+      socket.emit('playerInput', player.inputs[player.inputs.length - 1])
+    }
   }
 })

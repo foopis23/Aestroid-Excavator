@@ -5,14 +5,24 @@ import { Player } from '../../core/player'
 import { Vector2, mathv2 } from '../../core/vector2';
 import { isKeyDown } from './input';
 import { getMousePos } from './main';
+import { PlayerInputPacket } from '../../core/net';
+import { PhysicsWorld, tickPhysicsBody } from '../../core/physics';
+import { playerInputAcceleration } from '../../core/game';
 
 export interface ClientPlayerEntity extends Player {
   readonly isLocalPlayer: boolean;
-  tick(delta: number, currentTime: number): void;
+  tick(delta: number, currentTime: number, world: PhysicsWorld): void;
+}
+
+export interface PlayerInputData extends PlayerInputPacket {
+  delta: number
 }
 
 export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
   public serverUpdates : PlayerUpdateQueueData[];
+  public inputs: PlayerInputData[];
+  private inputSeq: number;
+  private lastServerInput: number;
 
   public get lookRot(): number {
     return this.rotation
@@ -43,6 +53,9 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
     this.scale.x = 30
     this.scale.y = 30
     this.serverUpdates = []
+    this.inputs = []
+    this.inputSeq = 0
+    this.lastServerInput = 0
   }
 
   private pollInput() {
@@ -79,9 +92,44 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
   }
 
 
-  public tick(delta: number, currentTime: number): void {
+  public tick(delta: number, currentTime: number, world: PhysicsWorld): void {
     if (this.isLocalPlayer) {
       this.pollInput()
+
+      this.inputs.push({
+        moveInput: this.moveInput,
+        lookRot: this.lookRot,
+        id: this.inputSeq,
+        delta: delta
+      })
+
+      this.inputSeq++;
+      if (!Number.isSafeInteger(this.inputSeq)) {
+        this.inputSeq = 0
+      }
+
+      const latestServerUpdate = this.serverUpdates[this.serverUpdates.length - 1]
+
+      if (this.lastServerInput < latestServerUpdate.lastInputProcessed) {
+        this.lastServerInput = latestServerUpdate.lastInputProcessed
+        this.inputs = this.inputs.filter((input) => {
+          return latestServerUpdate.lastInputProcessed < input.id;
+        })
+
+        this.position.x = latestServerUpdate.position.x
+        this.position.y = latestServerUpdate.position.y
+        this.rotation = latestServerUpdate.rotation
+
+        const currentAcceleration = this.acceleration
+
+        this.inputs.forEach((input) => {
+          this.acceleration.x = input.moveInput.x * playerInputAcceleration
+          this.acceleration.y = input.moveInput.y * playerInputAcceleration
+          tickPhysicsBody(this, world, input.delta)
+        })
+
+        this.acceleration = currentAcceleration
+      }
     } else {
       let lastUpdate;
       let targetUpdate;
@@ -114,8 +162,6 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
         this.position.y = lerp(this.position.y, pos.y, this.clientSmoothing * delta)
         this.rotation = lerp(this.rotation, rot, this.clientSmoothing * delta)
       }
-  
-      console.log(this.position.x, this.position.y)
     }
   }
 }

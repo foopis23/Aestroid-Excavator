@@ -13,6 +13,7 @@ import {
   PlayerSyncData
 } from '../../core/net'
 import { onPlayerInput, onPlayerJoin, onPlayerLeave, physicsLoop, world, physicsTickRate } from '../../core/game'
+import { ServerPlayerEntity } from './player'
 
 const port: number = (process.env.PORT)? parseInt(process.env.PORT) : 9500
 const origin: string = process.env.CORS_URL
@@ -28,17 +29,9 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEve
 // Setup Web Socket
 io.on("connection", (socket: Socket) => {
   // setup intial data
-  onPlayerJoin({
-    id: socket.id,
-    position: {x: 0, y: 0},
-    velocity: {x: 0, y: 0},
-    acceleration: {x: 0, y: 0},
-    rotation: 0,
-    radius: 20,
-    moveInput: {x: 0, y: 0},
-    lookRot: 0,
-    dragScale: 0.8
-  })
+  const newPlayer = new ServerPlayerEntity(socket.id, 20);
+
+  onPlayerJoin(newPlayer)
 
   // emit initial data
   io.emit('playerJoin', socket.id)
@@ -62,7 +55,8 @@ const clientUpdateLoop = () => {
       return {
         id: player.id,
         position: player.position,
-        rotation: player.rotation
+        rotation: player.rotation,
+        lastInputProcessed: (player as ServerPlayerEntity).lastInputProcessed
       }
     })
 
