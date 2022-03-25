@@ -13,16 +13,14 @@ window.addEventListener('keyup', (e) => {
 export function useMousePos (container: PIXI.Container): { getMousePos: () => {x: number, y: number}, destroy: () => void} {
   const mousePos: Vector2 = { x: 0, y: 0 }
 
-  const listener = (e: any): void => {
+  container.addListener('mousemove', (e): void => {
     mousePos.x = e.data.global.x
     mousePos.y = e.data.global.y
-  }
-
-  container.addListener('mousemove', listener)
+  })
 
   const getMousePos = (): Vector2 => mousePos
   const destroy = (): void => {
-    container.removeListener('mousemove', listener)
+    container.removeListener('mousemove')
   }
 
   return {

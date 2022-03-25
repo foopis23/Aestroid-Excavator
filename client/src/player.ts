@@ -5,14 +5,24 @@ import { Player } from '../../core/player'
 import { Vector2, mathv2 } from '../../core/vector2';
 import { isKeyDown } from './input';
 import { getMousePos } from './main';
+import { PlayerInputPacket } from '../../core/net';
+import { PhysicsWorld, tickPhysicsBody } from '../../core/physics';
+import { playerInputAcceleration } from '../../core/game';
 
 export interface ClientPlayerEntity extends Player {
   readonly isLocalPlayer: boolean;
-  tick(delta: number, currentTime: number): void;
+  tick(delta: number, currentTime: number, world: PhysicsWorld): void;
+}
+
+export interface PlayerInputData extends PlayerInputPacket {
+  delta: number
 }
 
 export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
   public serverUpdates : PlayerUpdateQueueData[];
+  public inputs: PlayerInputData[];
+  private inputSeq: number;
+  private lastServerInput: number;
 
   public get lookRot(): number {
     return this.rotation
@@ -43,6 +53,9 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
     this.scale.x = 30
     this.scale.y = 30
     this.serverUpdates = []
+    this.inputs = []
+    this.inputSeq = 0
+    this.lastServerInput = 0
   }
 
   private pollInput() {
@@ -79,41 +92,76 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
   }
 
 
-  public tick(delta: number, currentTime: number): void {
+  public tick(delta: number, currentTime: number, world: PhysicsWorld): void {
     if (this.isLocalPlayer) {
       this.pollInput()
-    }
 
-    let lastUpdate;
-    let targetUpdate;
+      this.inputs.push({
+        moveInput: this.moveInput,
+        lookRot: this.lookRot,
+        id: this.inputSeq,
+        delta: delta
+      })
 
-    for (let i=0; i < this.serverUpdates.length -1; i++) {
-      let tempLast = this.serverUpdates[i]
-      let tempTarget = this.serverUpdates[i+1]
-
-      if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
-        lastUpdate = tempLast
-        targetUpdate = tempTarget
-        break
+      this.inputSeq++;
+      if (!Number.isSafeInteger(this.inputSeq)) {
+        this.inputSeq = 0
       }
-    }
 
-    if (lastUpdate && targetUpdate) {
-      const difference = targetUpdate.time - currentTime;
-      const maxDiff = (targetUpdate.time - lastUpdate.time)
-      const timePoint = ((maxDiff - difference)/maxDiff)
+      const latestServerUpdate = this.serverUpdates[this.serverUpdates.length - 1]
 
-      let pos = {x: 0, y: 0}
-      let rot = 0
+      if (this.lastServerInput < latestServerUpdate.lastInputProcessed) {
+        this.lastServerInput = latestServerUpdate.lastInputProcessed
+        this.inputs = this.inputs.filter((input) => {
+          return latestServerUpdate.lastInputProcessed < input.id;
+        })
 
-      pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )
-      pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint )
-      rot = lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
-      
-      //client smoothing
-      this.position.x = lerp(this.position.x, pos.x, this.clientSmoothing * delta)
-      this.position.y = lerp(this.position.y, pos.y, this.clientSmoothing * delta)
-      this.rotation = lerp(this.rotation, rot, this.clientSmoothing * delta)
+        this.position.x = latestServerUpdate.position.x
+        this.position.y = latestServerUpdate.position.y
+        this.rotation = latestServerUpdate.rotation
+
+        const currentAcceleration = this.acceleration
+
+        this.inputs.forEach((input) => {
+          this.acceleration.x = input.moveInput.x * playerInputAcceleration
+          this.acceleration.y = input.moveInput.y * playerInputAcceleration
+          tickPhysicsBody(this, world, input.delta)
+        })
+
+        this.acceleration = currentAcceleration
+      }
+    } else {
+      let lastUpdate;
+      let targetUpdate;
+  
+      for (let i=0; i < this.serverUpdates.length -1; i++) {
+        const tempLast = this.serverUpdates[i]
+        const tempTarget = this.serverUpdates[i+1]
+  
+        if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
+          lastUpdate = tempLast
+          targetUpdate = tempTarget
+          break
+        }
+      }
+  
+      if (lastUpdate && targetUpdate) {
+        const difference = targetUpdate.time - currentTime;
+        const maxDiff = (targetUpdate.time - lastUpdate.time)
+        const timePoint = ((maxDiff - difference)/maxDiff)
+  
+        const pos = {x: 0, y: 0}
+        let rot = 0
+  
+        pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )
+        pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint )
+        rot = lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
+        
+        //client smoothing
+        this.position.x = lerp(this.position.x, pos.x, this.clientSmoothing * delta)
+        this.position.y = lerp(this.position.y, pos.y, this.clientSmoothing * delta)
+        this.rotation = lerp(this.rotation, rot, this.clientSmoothing * delta)
+      }
     }
   }
 }

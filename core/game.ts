@@ -1,24 +1,16 @@
 import { World } from './world'
 import { tickPhysicsBody } from './physics'
 import { PlayerInputPacket } from './net'
+import { Player } from './player'
+import { ServerPlayerEntity } from '../server/src/player'
 
 export const world: World = new World()
-const tickRateMS = 1000/60
-const playerInputAcceleration = 1000
+export const physicsTickRate = 1000/60
+export const playerInputAcceleration = 1000
 let lastPhysicsUpdate = Date.now()
 
-export function onPlayerJoin(id : string) {
-  world.players[id] = {
-    id,
-    position: {x: 0, y: 0},
-    velocity: {x: 0, y: 0},
-    acceleration: {x: 0, y: 0},
-    rotation: 0,
-    radius: 20,
-    moveInput: {x: 0, y: 0},
-    lookRot: 0,
-    dragScale: 0.8
-  }
+export function onPlayerJoin(player: Player) {
+  world.players[player.id] = player
 }
 
 export function onPlayerLeave(id: string) {
@@ -26,13 +18,13 @@ export function onPlayerLeave(id: string) {
 }
 
 export function onPlayerInput(id: string, input: PlayerInputPacket) {
-  world.players[id].moveInput = input.moveInput
-  world.players[id].lookRot = input.lookRot
+  const player = (world.players[id] as ServerPlayerEntity)
+  player.moveInput = input.moveInput
+  player.lookRot = input.lookRot
+  player.lastInputProcessed = input.id
 }
 
-// gamers loop, rise up
-setInterval(() => physicsLoop(), tickRateMS)
-function physicsLoop(): void {
+export function physicsLoop(): void {
   const now = Date.now()
   const delta = (now - lastPhysicsUpdate ) / 1000
   lastPhysicsUpdate = now

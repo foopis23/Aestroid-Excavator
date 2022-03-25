@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 require(`dotenv-defaults`).config({
   path: './.env',
   encoding: 'utf8',
@@ -12,7 +13,8 @@ import {
   SocketData, 
   PlayerSyncData
 } from '../../core/net'
-import { onPlayerInput, onPlayerJoin, onPlayerLeave, world } from '../../core/game'
+import { onPlayerInput, onPlayerJoin, onPlayerLeave, physicsLoop, world, physicsTickRate } from '../../core/game'
+import { ServerPlayerEntity } from './player'
 
 const port: number = (process.env.PORT)? parseInt(process.env.PORT) : 9500
 const origin: string = process.env.CORS_URL
@@ -28,7 +30,9 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEve
 // Setup Web Socket
 io.on("connection", (socket: Socket) => {
   // setup intial data
-  onPlayerJoin(socket.id)
+  const newPlayer = new ServerPlayerEntity(socket.id, 20);
+
+  onPlayerJoin(newPlayer)
 
   // emit initial data
   io.emit('playerJoin', socket.id)
@@ -52,7 +56,8 @@ const clientUpdateLoop = () => {
       return {
         id: player.id,
         position: player.position,
-        rotation: player.rotation
+        rotation: player.rotation,
+        lastInputProcessed: (player as ServerPlayerEntity).lastInputProcessed
       }
     })
 
@@ -62,6 +67,7 @@ const clientUpdateLoop = () => {
   })
 }
 setInterval(clientUpdateLoop, networkTickRate)
+setInterval(physicsLoop, physicsTickRate)
 
 
 io.listen(port)
