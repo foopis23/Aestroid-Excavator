@@ -135,8 +135,8 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
       let targetUpdate;
   
       for (let i=0; i < this.serverUpdates.length -1; i++) {
-        let tempLast = this.serverUpdates[i]
-        let tempTarget = this.serverUpdates[i+1]
+        const tempLast = this.serverUpdates[i]
+        const tempTarget = this.serverUpdates[i+1]
   
         if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
           lastUpdate = tempLast
@@ -150,7 +150,7 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
         const maxDiff = (targetUpdate.time - lastUpdate.time)
         const timePoint = ((maxDiff - difference)/maxDiff)
   
-        let pos = {x: 0, y: 0}
+        const pos = {x: 0, y: 0}
         let rot = 0
   
         pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )

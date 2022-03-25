@@ -1,0 +1,6 @@
+{
+  "ignore": [".git", "node_modules", "dist"],
+  "watch": ["./src"],
+  "exec": "npm run lint && npx ts-node src/index.ts",
+  "ext": "ts"
+}

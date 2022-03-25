@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 require(`dotenv-defaults`).config({
   path: './.env',
   encoding: 'utf8',

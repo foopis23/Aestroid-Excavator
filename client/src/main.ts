@@ -79,7 +79,7 @@ app.ticker.add((deltaFrame: number) => {
 
   if (socket.clientTime && socket.lastPacketTime) {
     const currentTime = socket.clientTime + (Date.now() - socket.lastPacketTime)
-    for (let playerId of Object.keys(world.players)) {
+    for (const playerId of Object.keys(world.players)) {
       const player = world.players[playerId] as PlayerEntity
       player.tick(delta, currentTime, world)
     }
