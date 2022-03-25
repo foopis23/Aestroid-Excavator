@@ -2,7 +2,7 @@ import './style.css'
 import * as PIXI from 'pixi.js'
 import { useMousePos } from './input'
 import { io } from "socket.io-client";
-import { PlayerEntity } from './player';
+import { ClientPlayerEntity } from './player';
 import { GameSocket } from './types';
 import { onPlayerJoin, onPlayerLeave, physicsLoop, world } from '../../core/game'
 
@@ -35,13 +35,13 @@ socket.on("connect", () => {
 });
 
 socket.on('playerJoin', (id) => {
-  const player = new PlayerEntity(clientSmoothing, id, id == socket.id)
+  const player = new ClientPlayerEntity(clientSmoothing, id, id == socket.id)
   onPlayerJoin(player)
   app.stage.addChild(player)
 })
 
 socket.on('playerLeft', (id) => {
-  app.stage.removeChild(world.players[id] as PlayerEntity)
+  app.stage.removeChild(world.players[id] as ClientPlayerEntity)
   onPlayerLeave(id)
 })
 
@@ -55,12 +55,12 @@ socket.on('playersSync', (data) => {
 
     if (world.players[id] == undefined) {
       // continue;
-      const newPlayer = new PlayerEntity(clientSmoothing, id, id == socket.id)
+      const newPlayer = new ClientPlayerEntity(clientSmoothing, id, id == socket.id)
       onPlayerJoin(newPlayer)
       app.stage.addChild(newPlayer)
     }
 
-    const player = world.players[id] as PlayerEntity
+    const player = world.players[id] as ClientPlayerEntity
 
     player.serverUpdates.push({ ...playerData, time: data.time })
 
@@ -80,14 +80,14 @@ app.ticker.add((deltaFrame: number) => {
   if (socket.clientTime && socket.lastPacketTime) {
     const currentTime = socket.clientTime + (Date.now() - socket.lastPacketTime)
     for (const playerId of Object.keys(world.players)) {
-      const player = world.players[playerId] as PlayerEntity
+      const player = world.players[playerId] as ClientPlayerEntity
       player.tick(delta, currentTime, world)
     }
   }
 
   // if local player, push current input to server
   if (world.players[socket.id]) {
-    const player = world.players[socket.id] as PlayerEntity
+    const player = world.players[socket.id] as ClientPlayerEntity
     const lastInput = player.inputs[player.inputs.length - 1]
     
     if (lastInput) {

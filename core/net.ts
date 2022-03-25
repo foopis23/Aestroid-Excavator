@@ -1,32 +1,32 @@
-import { Vector2 } from "./vector2"
+import { IVector2 } from "./vector2"
 
-export interface PlayerInputPacket {
-  moveInput: Vector2,
+export interface IPlayerInputPacket {
+  moveInput: IVector2,
   lookRot: number,
   id: number
 }
 
-export interface PlayerSyncData {
+export interface IPlayerSyncData {
   id: string,
-  position: Vector2,
+  position: IVector2,
   rotation: number,
   lastInputProcessed: number;
 }
-export interface PlayerSyncPacket {
-  players: PlayerSyncData[]
+export interface IPlayerSyncPacket {
+  players: IPlayerSyncData[]
   time: number
 }
 
-export interface ServerToClientEvents {
+export interface IServerToClientEvents {
   playerJoin: (id: string) => void,
   playerLeft: (id: string) => void
-  playersSync: (data: PlayerSyncPacket) => void
+  playersSync: (data: IPlayerSyncPacket) => void
 }
 
-export interface ClientToServerEvents {
-  playerInput: (input: PlayerInputPacket) => void,
+export interface IClientToServerEvents {
+  playerInput: (input: IPlayerInputPacket) => void,
 }
 
-export interface InterServerEvents {}
+export interface IInterServerEvents {}
 
-export interface SocketData {}
+export interface ISocketData {}

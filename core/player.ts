@@ -1,11 +1,11 @@
-import { PhysicsBody } from './physics'
-import { Vector2 } from './vector2'
+import { IPhysicsBody } from './physics'
+import { IVector2 } from './vector2'
 
-interface PlayerInput {
-  moveInput: Vector2,
+interface IPlayerInput {
+  moveInput: IVector2,
   lookRot: number
 }
 
-export interface Player extends PhysicsBody, PlayerInput {
+export interface IPlayer extends IPhysicsBody, IPlayerInput {
   id: string
 }

@@ -1,7 +1,7 @@
 import { World } from './world'
 import { tickPhysicsBody } from './physics'
-import { PlayerInputPacket } from './net'
-import { Player } from './player'
+import { IPlayerInputPacket } from './net'
+import { IPlayer } from './player'
 import { ServerPlayerEntity } from '../server/src/player'
 
 export const world: World = new World()
@@ -9,7 +9,7 @@ export const physicsTickRate = 1000/60
 export const playerInputAcceleration = 1000
 let lastPhysicsUpdate = Date.now()
 
-export function onPlayerJoin(player: Player) {
+export function onPlayerJoin(player: IPlayer) {
   world.players[player.id] = player
 }
 
@@ -17,7 +17,7 @@ export function onPlayerLeave(id: string) {
   delete world.players[id]
 }
 
-export function onPlayerInput(id: string, input: PlayerInputPacket) {
+export function onPlayerInput(id: string, input: IPlayerInputPacket) {
   const player = (world.players[id] as ServerPlayerEntity)
   player.moveInput = input.moveInput
   player.lookRot = input.lookRot

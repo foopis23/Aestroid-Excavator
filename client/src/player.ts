@@ -1,26 +1,26 @@
 import * as PIXI from 'pixi.js'
 import { lerp } from '../../core/util';
-import { PlayerUpdateQueueData } from './types';
-import { Player } from '../../core/player'
-import { Vector2, mathv2 } from '../../core/vector2';
+import { IPlayerUpdateQueueData } from './types';
+import { IPlayer } from '../../core/player'
+import { IVector2, mathv2 } from '../../core/vector2';
 import { isKeyDown } from './input';
 import { getMousePos } from './main';
-import { PlayerInputPacket } from '../../core/net';
-import { PhysicsWorld, tickPhysicsBody } from '../../core/physics';
+import { IPlayerInputPacket } from '../../core/net';
+import { IPhysicsWorld, tickPhysicsBody } from '../../core/physics';
 import { playerInputAcceleration } from '../../core/game';
 
-export interface ClientPlayerEntity extends Player {
+export interface IClientPlayerEntity extends IPlayer {
   readonly isLocalPlayer: boolean;
-  tick(delta: number, currentTime: number, world: PhysicsWorld): void;
+  tick(delta: number, currentTime: number, world: IPhysicsWorld): void;
 }
 
-export interface PlayerInputData extends PlayerInputPacket {
+export interface IPlayerInputData extends IPlayerInputPacket {
   delta: number
 }
 
-export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
-  public serverUpdates : PlayerUpdateQueueData[];
-  public inputs: PlayerInputData[];
+export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerEntity {
+  public serverUpdates : IPlayerUpdateQueueData[];
+  public inputs: IPlayerInputData[];
   private inputSeq: number;
   private lastServerInput: number;
 
@@ -37,10 +37,10 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
     public readonly id: string,
     public readonly isLocalPlayer: boolean,
     public radius: number = 20,
-    public velocity: Vector2 = {x: 0, y: 0},
-    public acceleration: Vector2 = {x: 0, y: 0},
+    public velocity: IVector2 = {x: 0, y: 0},
+    public acceleration: IVector2 = {x: 0, y: 0},
     public dragScale: number = 0.8,
-    public moveInput: Vector2 = {x: 0, y: 0},
+    public moveInput: IVector2 = {x: 0, y: 0},
     ) {
     super()
     this.addChild(
@@ -92,7 +92,7 @@ export class PlayerEntity extends PIXI.Container implements ClientPlayerEntity {
   }
 
 
-  public tick(delta: number, currentTime: number, world: PhysicsWorld): void {
+  public tick(delta: number, currentTime: number, world: IPhysicsWorld): void {
     if (this.isLocalPlayer) {
       this.pollInput()
 

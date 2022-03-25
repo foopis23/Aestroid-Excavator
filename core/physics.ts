@@ -1,22 +1,22 @@
-import { Vector2, mathv2 } from './vector2'
+import { IVector2, mathv2 } from './vector2'
 import { clamp } from './util'
 
-export interface PhysicsBody {
-  position: Vector2
+export interface IPhysicsBody {
+  position: IVector2
   rotation: number
   radius: number
-  velocity: Vector2
-  acceleration: Vector2
+  velocity: IVector2
+  acceleration: IVector2
   dragScale: number
 }
 
-export interface PhysicsWorld {
-  bodies: PhysicsBody[]
+export interface IPhysicsWorld {
+  bodies: IPhysicsBody[]
 }
 
 export function isCircleVsCircleCollision (
-  pos1: Vector2,
-  pos2: Vector2,
+  pos1: IVector2,
+  pos2: IVector2,
   radius1: number,
   radius2: number
 ): boolean {
@@ -26,9 +26,9 @@ export function isCircleVsCircleCollision (
 }
 
 export function resolveCircleVsCircleCollision (
-  a: PhysicsBody,
-  b: PhysicsBody
-): Vector2 {
+  a: IPhysicsBody,
+  b: IPhysicsBody
+): IVector2 {
   const distance = mathv2.distance(a.position, b.position)
   const radiiSum = a.radius + b.radius
   const xDiff = a.position.x - b.position.x
@@ -43,10 +43,10 @@ export function resolveCircleVsCircleCollision (
 }
 
 export function isCircleVsRectangleCollision (
-  circlePos: Vector2,
+  circlePos: IVector2,
   circleRadius: number,
-  rectPos: Vector2,
-  rectSize: Vector2
+  rectPos: IVector2,
+  rectSize: IVector2
 ): boolean {
   const nearestPoint = {
     x: clamp(circlePos.x, rectPos.x, rectPos.x + rectSize.x),
@@ -59,11 +59,11 @@ export function isCircleVsRectangleCollision (
 }
 
 export function resolveCircleVsRectangleCollision (
-  circlePos: Vector2,
+  circlePos: IVector2,
   circleRadius: number,
-  rectPos: Vector2,
-  rectSize: Vector2
-): Vector2 {
+  rectPos: IVector2,
+  rectSize: IVector2
+): IVector2 {
   const nearestPoint = {
     x: clamp(circlePos.x, rectPos.x, rectPos.x + rectSize.x),
     y: clamp(circlePos.y, rectPos.y, rectPos.y + rectSize.y)
@@ -80,7 +80,7 @@ export function resolveCircleVsRectangleCollision (
   return finalPos;
 }
 
-export function tickPhysicsBody(phyBody : PhysicsBody, world : PhysicsWorld, delta : number) {
+export function tickPhysicsBody(phyBody : IPhysicsBody, world : IPhysicsWorld, delta : number) {
   const drag = {
     x: phyBody.dragScale * phyBody.velocity.x ** 2 * Math.sign(phyBody.velocity.x),
     y: phyBody.dragScale * phyBody.velocity.y ** 2 * Math.sign(phyBody.velocity.y)
