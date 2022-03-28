@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io-client';
-import { IPlayerSyncData } from '../../core/net'
-import { IClientToServerEvents, IServerToClientEvents } from '../../core/net';
+import { IPlayerSyncData } from '../core/net'
+import { IClientToServerEvents, IServerToClientEvents } from '../core/net';
 
 
 export interface IPlayerUpdateQueueData extends IPlayerSyncData {

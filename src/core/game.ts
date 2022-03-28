@@ -42,7 +42,7 @@ export class Game {
     this.lastPhysicsUpdate = now
   
     // apply player input
-    for (let player of Object.values(this.players)) {
+    for (const player of Object.values(this.players)) {
       player.applyInput()
     }
     

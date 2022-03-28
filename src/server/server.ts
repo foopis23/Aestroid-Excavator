@@ -1,7 +1,7 @@
 import { Server, Socket } from "socket.io"
-import { Game } from "../../core/game"
-import { IPlayerInputPacket } from "../../core/net";
-import { TransformSyncData } from "../../core/physics/transform";
+import { Game } from "../core/game"
+import { IPlayerInputPacket } from "../core/net";
+import { TransformSyncData } from "../core/physics/transform";
 import { ServerPlayerEntity } from "./server-player-entity"
 
 export class GameServer {

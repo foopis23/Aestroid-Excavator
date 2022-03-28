@@ -11,13 +11,13 @@ import {
   IServerToClientEvents,
   IInterServerEvents,
   ISocketData
-} from '../../core/net'
-import { Game } from '../../core/game'
-import { PhysicsWorld } from '../../core/physics/world'
+} from '../core/net'
+import { Game } from '../core/game'
+import { PhysicsWorld } from '../core/physics/world'
 import { GameServer } from './server'
 
 const port: number = (process.env.PORT)? parseInt(process.env.PORT) : 9500
-const origin: string = process.env.CORS_URL
+const origin: string = process.env.CORS_URL ?? ""
 
 const io = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
   cors: {

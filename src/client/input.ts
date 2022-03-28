@@ -1,5 +1,5 @@
-import * as PIXI from 'pixi.js'
-import { IVector2 } from '../../core/vector2'
+import { Container } from 'pixi.js'
+import { IVector2 } from '../core/vector2'
 const keyMap: Record<string, boolean> = {}
 
 window.addEventListener('keydown', (e) => {
@@ -10,7 +10,7 @@ window.addEventListener('keyup', (e) => {
   keyMap[e.key] = false
 })
 
-export function useMousePos (container: PIXI.Container): { getMousePos: () => {x: number, y: number}, destroy: () => void} {
+export function useMousePos (container: Container): { getMousePos: () => {x: number, y: number}, destroy: () => void} {
   const mousePos: IVector2 = { x: 0, y: 0 }
 
   container.addListener('mousemove', (e): void => {

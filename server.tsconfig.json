@@ -5,8 +5,10 @@
     "esModuleInterop": true,
     "target": "ES2021",
     "moduleResolution": "node",
-    "sourceMap": true,
-    "outDir": "dist"
+    "sourceMap": false,
+    "outDir": "dist/server"
   },
-  "lib": ["ES2021"]
+  "lib": ["ES2021"],
+  "include": ["src/server/**/*","src/core/**/*"],
+  "exclude": ["node_modules/**/*"]
 }

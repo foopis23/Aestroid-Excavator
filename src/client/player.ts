@@ -1,12 +1,12 @@
-import * as PIXI from 'pixi.js'
-import { Util } from '../../core/util';
+import { Container, Graphics, Point } from 'pixi.js'
+import { Util } from '../core/util';
 import { IPlayerUpdateQueueData } from './types';
-import { IPlayer } from '../../core/player'
-import { IVector2, Vector2 } from '../../core/vector2';
+import { IPlayer } from '../core/player'
+import { IVector2, Vector2 } from '../core/vector2';
 import { isKeyDown } from './input';
 import { getMousePos } from './main';
-import { IPlayerInputPacket } from '../../core/net';
-import { IPhysicsWorld } from '../../core/physics/world';
+import { IPlayerInputPacket } from '../core/net';
+import { IPhysicsWorld } from '../core/physics/world';
 import { Application } from 'pixi.js';
 
 export interface IClientPlayerEntity extends IPlayer {
@@ -18,7 +18,7 @@ export interface IPlayerInputData extends IPlayerInputPacket {
   delta: number
 }
 
-export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerEntity {
+export class ClientPlayerEntity extends Container implements IClientPlayerEntity {
   public serverUpdates: IPlayerUpdateQueueData[];
   public inputs: IPlayerInputData[];
   private inputSeq: number;
@@ -47,9 +47,9 @@ export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerE
   ) {
     super()
     this.addChild(
-      new PIXI.Graphics()
+      new Graphics()
         .beginFill(0x00ff00)
-        .drawPolygon([new PIXI.Point(0, 0), new PIXI.Point(1, 0.5), new PIXI.Point(0, 1)])
+        .drawPolygon([new Point(0, 0), new Point(1, 0.5), new Point(0, 1)])
     )
     this.pivot.x = 0.5
     this.pivot.y = 0.5
@@ -108,7 +108,7 @@ export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerE
   }
 
 
-  public tick(delta: number, currentTime: number, world: IPhysicsWorld): void {
+  public tick(delta: number, currentTime: number): void {
     if (this.isLocalPlayer) {
       this.pollInput()
 

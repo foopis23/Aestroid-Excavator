@@ -1,20 +1,20 @@
 import './style.css'
-import * as PIXI from 'pixi.js'
+import { Application, settings } from 'pixi.js'
 import { useMousePos } from './input'
 import { io } from "socket.io-client"
 import { ClientPlayerEntity } from './player'
 import { GameSocket } from './types'
-import { Game } from '../../core/game'
-import { PhysicsWorld } from '../../core/physics/world'
+import { Game } from '../core/game'
+import { PhysicsWorld } from '../core/physics/world'
 
 // configurable
-const TARGET_FPMS = PIXI.settings.TARGET_FPMS ?? 0.06
+const TARGET_FPMS = settings.TARGET_FPMS ?? 0.06
 
 // get host name
 const host = prompt('Enter Host Address')
 
 // create graphics app
-const app = new PIXI.Application()
+const app = new Application()
 app.stage.interactive = true
 document.body.appendChild(app.view)
 
@@ -40,7 +40,7 @@ app.ticker.add((deltaFrame: number) => {
     const currentTime = socket.clientTime + (Date.now() - socket.lastPacketTime)
     for (const playerId of Object.keys(game.players)) {
       const player = game.players[playerId] as ClientPlayerEntity
-      player.tick(delta, currentTime, game.world)
+      player.tick(delta, currentTime)
     }
   }
 

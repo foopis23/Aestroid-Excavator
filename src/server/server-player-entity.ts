@@ -1,3 +1,3 @@
-import { IPlayer } from "../../core/player";
+import { IPlayer } from "../core/player";
 
 export class ServerPlayerEntity extends IPlayer {}

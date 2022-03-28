@@ -1,5 +1,5 @@
 import { Application } from "pixi.js";
-import { Game } from "../../core/game";
+import { Game } from "../core/game";
 import { ClientPlayerEntity } from "./player";
 import { GameSocket } from "./types";
 
