@@ -1,13 +1,13 @@
 import * as PIXI from 'pixi.js'
-import { lerp } from '../../core/util';
+import { Util } from '../../core/util';
 import { IPlayerUpdateQueueData } from './types';
 import { IPlayer } from '../../core/player'
-import { IVector2, mathv2 } from '../../core/vector2';
+import { IVector2, Vector2 } from '../../core/vector2';
 import { isKeyDown } from './input';
 import { getMousePos } from './main';
 import { IPlayerInputPacket } from '../../core/net';
-import { IPhysicsWorld, tickPhysicsBody } from '../../core/physics';
-import { playerInputAcceleration } from '../../core/game';
+import { IPhysicsWorld } from '../../core/physics/world';
+import { Application } from 'pixi.js';
 
 export interface IClientPlayerEntity extends IPlayer {
   readonly isLocalPlayer: boolean;
@@ -19,10 +19,11 @@ export interface IPlayerInputData extends IPlayerInputPacket {
 }
 
 export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerEntity {
-  public serverUpdates : IPlayerUpdateQueueData[];
+  public serverUpdates: IPlayerUpdateQueueData[];
   public inputs: IPlayerInputData[];
   private inputSeq: number;
   private lastServerInput: number;
+  public lastInputProcessed: number;
 
   public get lookRot(): number {
     return this.rotation
@@ -33,15 +34,17 @@ export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerE
   }
 
   constructor(
-    private readonly clientSmoothing : number,
+    private app: Application,
+    private readonly clientSmoothing: number,
     public readonly id: string,
     public readonly isLocalPlayer: boolean,
+    public isStatic: boolean = false,
     public radius: number = 20,
-    public velocity: IVector2 = {x: 0, y: 0},
-    public acceleration: IVector2 = {x: 0, y: 0},
+    public velocity: IVector2 = { x: 0, y: 0 },
+    public acceleration: IVector2 = { x: 0, y: 0 },
     public dragScale: number = 0.8,
-    public moveInput: IVector2 = {x: 0, y: 0},
-    ) {
+    public moveInput: IVector2 = { x: 0, y: 0 },
+  ) {
     super()
     this.addChild(
       new PIXI.Graphics()
@@ -56,8 +59,21 @@ export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerE
     this.inputs = []
     this.inputSeq = 0
     this.lastServerInput = 0
+    this.lastInputProcessed = 0
+  }
+  
+  public onPlayerJoin(): void {
+    this.app.stage.addChild(this)
   }
 
+  public onPlayerLeave(): void {
+    this.app.stage.removeChild(this)
+  }
+
+  public applyInput(): void {
+    throw new Error('Method not implemented.');
+  }
+  
   private pollInput() {
     let moveInput = { x: 0, y: 0 }
 
@@ -77,8 +93,8 @@ export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerE
       moveInput.y += 1
     }
 
-    if (mathv2.length(moveInput) > 1.0) {
-      moveInput = mathv2.normalize(moveInput)
+    if (Vector2.mag(moveInput) > 1.0) {
+      moveInput = Vector2.normalize(moveInput)
     }
 
     const mousePos = getMousePos()
@@ -122,45 +138,39 @@ export class ClientPlayerEntity extends PIXI.Container implements IClientPlayerE
 
         const currentAcceleration = this.acceleration
 
-        this.inputs.forEach((input) => {
-          this.acceleration.x = input.moveInput.x * playerInputAcceleration
-          this.acceleration.y = input.moveInput.y * playerInputAcceleration
-          tickPhysicsBody(this, world, input.delta)
-        })
-
         this.acceleration = currentAcceleration
       }
     } else {
       let lastUpdate;
       let targetUpdate;
-  
-      for (let i=0; i < this.serverUpdates.length -1; i++) {
+
+      for (let i = 0; i < this.serverUpdates.length - 1; i++) {
         const tempLast = this.serverUpdates[i]
-        const tempTarget = this.serverUpdates[i+1]
-  
+        const tempTarget = this.serverUpdates[i + 1]
+
         if (currentTime >= tempLast.time && currentTime <= tempTarget.time) {
           lastUpdate = tempLast
           targetUpdate = tempTarget
           break
         }
       }
-  
+
       if (lastUpdate && targetUpdate) {
         const difference = targetUpdate.time - currentTime;
         const maxDiff = (targetUpdate.time - lastUpdate.time)
-        const timePoint = ((maxDiff - difference)/maxDiff)
-  
-        const pos = {x: 0, y: 0}
+        const timePoint = ((maxDiff - difference) / maxDiff)
+
+        const pos = { x: 0, y: 0 }
         let rot = 0
-  
-        pos.x = lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint )
-        pos.y = lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint )
-        rot = lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
-        
+
+        pos.x = Util.lerp(lastUpdate.position.x, targetUpdate.position.x, timePoint)
+        pos.y = Util.lerp(lastUpdate.position.y, targetUpdate.position.y, timePoint)
+        rot = Util.lerp(lastUpdate.rotation, targetUpdate.rotation, timePoint)
+
         //client smoothing
-        this.position.x = lerp(this.position.x, pos.x, this.clientSmoothing * delta)
-        this.position.y = lerp(this.position.y, pos.y, this.clientSmoothing * delta)
-        this.rotation = lerp(this.rotation, rot, this.clientSmoothing * delta)
+        this.position.x = Util.lerp(this.position.x, pos.x, this.clientSmoothing * delta)
+        this.position.y = Util.lerp(this.position.y, pos.y, this.clientSmoothing * delta)
+        this.rotation = Util.lerp(this.rotation, rot, this.clientSmoothing * delta)
       }
     }
   }

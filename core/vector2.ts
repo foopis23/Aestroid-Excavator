@@ -3,29 +3,31 @@ export interface IVector2 {
   y: number
 }
 
-const distance = (a: IVector2, b: IVector2): number =>
-  Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+export class Vector2 implements IVector2 {
+  constructor(public x: number = 0, public y: number = 0) {}
 
-const subtract = (b: IVector2, a: IVector2): IVector2 => {
-  return { x: b.x - a.x, y: b.y - a.y }
-}
+  public static distance(a: IVector2, b: IVector2): number {
+    return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
+  }
 
-const length = (v: IVector2): number => Math.sqrt((v.x ** 2 + v.y ** 2))
+  public static subtract (b: IVector2, a: IVector2): IVector2 {
+    return { x: b.x - a.x, y: b.y - a.y }
+  }
 
-const normalize = (v: IVector2): IVector2 => {
-  const mag = length(v)
-  return { x: v.x / mag, y: v.y / mag }
-}
+  public static mag(v: IVector2): number {
+    return Math.sqrt((v.x ** 2 + v.y ** 2))
+  }
 
-const dot = (a: IVector2, b: IVector2): number => a.x * b.x + a.y * b.y
+  public static normalize(v: IVector2): IVector2 {
+    const mag = Vector2.mag(v)
+    return { x: v.x / mag, y: v.y / mag }
+  }
 
-const angle = (a: IVector2, b: IVector2): number => dot(a, b) / (length(a) * length(b))
+  public static dot (a: IVector2, b: IVector2): number {
+    return a.x * b.x + a.y * b.y
+  } 
 
-export const mathv2 = {
-  distance,
-  subtract,
-  length,
-  normalize,
-  dot,
-  angle
+  public static angle (a: IVector2, b: IVector2): number {
+    return Vector2.dot(a, b) / (Vector2.mag(a) * Vector2.mag(b))
+  }
 }

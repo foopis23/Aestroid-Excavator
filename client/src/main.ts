@@ -1,14 +1,13 @@
 import './style.css'
 import * as PIXI from 'pixi.js'
 import { useMousePos } from './input'
-import { io } from "socket.io-client";
-import { ClientPlayerEntity } from './player';
-import { GameSocket } from './types';
-import { onPlayerJoin, onPlayerLeave, physicsLoop, world } from '../../core/game'
+import { io } from "socket.io-client"
+import { ClientPlayerEntity } from './player'
+import { GameSocket } from './types'
+import { Game } from '../../core/game'
+import { PhysicsWorld } from '../../core/physics/world'
 
 // configurable
-const clientDelay = 100
-const clientSmoothing = 7
 const TARGET_FPMS = PIXI.settings.TARGET_FPMS ?? 0.06
 
 // get host name
@@ -29,67 +28,27 @@ socket.serverTime = 0
 socket.clientTime = 0
 socket.lastPacketTime = Date.now()
 
-// websocket connect
-socket.on("connect", () => {
-  // console.log(socket.id); // x8WIv7-mJelg7on_ALbx
-});
-
-socket.on('playerJoin', (id) => {
-  const player = new ClientPlayerEntity(clientSmoothing, id, id == socket.id)
-  onPlayerJoin(player)
-  app.stage.addChild(player)
-})
-
-socket.on('playerLeft', (id) => {
-  app.stage.removeChild(world.players[id] as ClientPlayerEntity)
-  onPlayerLeave(id)
-})
-
-socket.on('playersSync', (data) => {
-  socket.serverTime = data.time
-  socket.clientTime = socket.serverTime - clientDelay
-  socket.lastPacketTime = Date.now()
-
-  for (const playerData of data.players) {
-    const { id } = playerData
-
-    if (world.players[id] == undefined) {
-      // continue;
-      const newPlayer = new ClientPlayerEntity(clientSmoothing, id, id == socket.id)
-      onPlayerJoin(newPlayer)
-      app.stage.addChild(newPlayer)
-    }
-
-    const player = world.players[id] as ClientPlayerEntity
-
-    player.serverUpdates.push({ ...playerData, time: data.time })
-
-    while (player.serverUpdates[0].time < socket.clientTime
-      && player.serverUpdates[1].time < socket.clientTime) {
-        player.serverUpdates.splice(0, 1)
-    }
-  }
-})
+const game = new Game(new PhysicsWorld())
 
 // main game loop
 app.ticker.add((deltaFrame: number) => {
   const delta = (deltaFrame / TARGET_FPMS) / 1000
 
-  physicsLoop();
+  game.tick();
 
   if (socket.clientTime && socket.lastPacketTime) {
     const currentTime = socket.clientTime + (Date.now() - socket.lastPacketTime)
-    for (const playerId of Object.keys(world.players)) {
-      const player = world.players[playerId] as ClientPlayerEntity
-      player.tick(delta, currentTime, world)
+    for (const playerId of Object.keys(game.players)) {
+      const player = game.players[playerId] as ClientPlayerEntity
+      player.tick(delta, currentTime, game.world)
     }
   }
 
   // if local player, push current input to server
-  if (world.players[socket.id]) {
-    const player = world.players[socket.id] as ClientPlayerEntity
+  if (game.players[socket.id]) {
+    const player = game.players[socket.id] as ClientPlayerEntity
     const lastInput = player.inputs[player.inputs.length - 1]
-    
+
     if (lastInput) {
       socket.emit('playerInput', player.inputs[player.inputs.length - 1])
     }
