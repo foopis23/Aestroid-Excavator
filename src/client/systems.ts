@@ -1,11 +1,28 @@
+import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent } from "../core/components";
+import { ISystem } from "../core/systems";
 import { Application } from "pixi.js";
 import { Vector2 } from "simple-game-math";
-import { ComponentTypes, LocalPlayerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
 import { IECS } from "../core/ecs";
 import { IEntity } from "../core/entity";
-import { ISystem } from "../core/systems";
 import { useMousePos } from "./input";
 import { isKeyDown } from "./input";
+
+export const GraphicsSystem: ISystem = {
+  update: (ecs, _dt, entity) => {
+    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    const graphics = ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
+
+    if (!transform || !graphics) {
+      return
+    }
+
+    if (graphics.graphics) {
+      graphics.graphics.position.x = transform.position.x
+      graphics.graphics.position.y = transform.position.y
+      graphics.graphics.rotation = transform.rotation
+    }
+  }
+}
 
 export class PollInputSystem implements ISystem {
   private getMousePos: () => { x: number, y: number }
