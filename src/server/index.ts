@@ -5,29 +5,93 @@ require(`dotenv-defaults`).config({
   defaults: './.env.defaults' // This is new
 })
 
-import { Server } from 'socket.io'
-import { 
+import { Server, Socket } from 'socket.io'
+import {
   IClientToServerEvents,
   IServerToClientEvents,
   IInterServerEvents,
-  ISocketData
+  ISocketData,
+  IPlayerInputPacket
 } from '../core/net'
-import { Game } from '../core/game'
-import { PhysicsWorld } from '../core/physics/world'
-import { GameServer } from './server'
 
-const port: number = (process.env.PORT)? parseInt(process.env.PORT) : 9500
+import { ECS } from '../core/ecs'
+import { CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
+import { ComponentTypes, EntityData } from '../core/components'
+import { TransformSyncSystem } from './transform-sync'
+
+const SERVER_TICK_RATE = 1000 / 60
+
+// setup server socket
+const port: number = (process.env.PORT) ? parseInt(process.env.PORT) : 9500
 const origin: string = process.env.CORS_URL ?? ""
-
-const io = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
+const serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
   cors: {
     origin: origin,
     methods: ['GET', 'POST']
   }
 })
 
-const game = new Game(new PhysicsWorld())
-new GameServer(game, io)
+// setup ecs
+const ecs = new ECS(
+  EntityData,
+  PhysicsSystem,
+  CollisionSystem,
+  PlayerInputHandlerSystem,
+  new TransformSyncSystem(serverSocket)
+);
 
-io.listen(port)
+// create map of socket id to player entity id
+const socketIdToPlayerEntityId = new Map<string, number>()
+
+serverSocket.on("connection", (socket: Socket) => onConnect(socket))
+
+function onConnect(socket: Socket): void {
+  // setup intial data
+  const player = ecs.createNewEntity(
+    {
+      size: { x: 30, y: 30 },
+      static: false,
+      type: 'circle'
+    },
+    [
+      ComponentTypes.Transform,
+      ComponentTypes.PlayerInput,
+      ComponentTypes.Collider,
+      ComponentTypes.RigidBody
+    ]
+  )
+
+  socketIdToPlayerEntityId.set(socket.id, player.id)
+  socket.emit('playerId', player.id)
+  socket.on('disconnect', () => onDisconnect(socket))
+  socket.on('playerInput', (input: IPlayerInputPacket) => handlePlayerInputPacket(input))
+
+  // emit initial data
+  this.serverSocket.emit('spawnEntity', player.id)
+}
+
+function onDisconnect(socket: Socket) {
+  socketIdToPlayerEntityId.delete(socket.id)
+  ecs.destroyEntityById(socketIdToPlayerEntityId.get(socket.id))
+  this.serverSocket.emit('despawnEntity', socketIdToPlayerEntityId.get(socket.id))
+}
+
+function handlePlayerInputPacket(inputPacket: IPlayerInputPacket) {
+  const entity = ecs.entities[inputPacket.entityId]
+  const inputData = ecs.getComponent<IPlayerInputPacket>(entity, ComponentTypes.PlayerInput)
+  inputData.moveInput = inputPacket.moveInput
+  inputData.lookRot = inputPacket.lookRot
+}
+
+let lastTick: number = Date.now();
+function tick() {
+  const now = Date.now()
+  const dt = now - lastTick / 1000
+  lastTick = now
+  ecs.update(dt)
+}
+
+serverSocket.listen(port)
 console.log(`Server is listening at ws://localhost:${port}`)
+
+setInterval(() => tick(), SERVER_TICK_RATE)

@@ -1,56 +1,66 @@
 import './style.css'
-import { Application, settings } from 'pixi.js'
-import { useMousePos } from './input'
-import { io } from "socket.io-client"
-import { ClientPlayerEntity } from './player'
-import { GameSocket } from './types'
-import { Game } from '../core/game'
-import { PhysicsWorld } from '../core/physics/world'
 
-// configurable
+import { Application, Graphics, Point, settings, Text } from 'pixi.js'
+import { ECS } from '../core/ecs'
+import { CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
+
+import { ComponentTypes } from '../core/components'
+import { PollInputSystem } from './poll-input-system'
+import { GraphicsSystem } from './graphics-system'
 const TARGET_FPMS = settings.TARGET_FPMS ?? 0.06
 
-// get host name
-const host = prompt('Enter Host Address')
-
-// create graphics app
-const app = new Application()
+const app = new Application({
+  width: window.innerWidth,
+  height: window.innerHeight,
+})
 app.stage.interactive = true
 document.body.appendChild(app.view)
 
-// setup mouse listener for graphics app
-export const { getMousePos } = useMousePos(app.stage)
+const ecs = new ECS(
+  new PollInputSystem(app),
+  PlayerInputHandlerSystem,
+  PhysicsSystem,
+  CollisionSystem,
+  GraphicsSystem
+)
 
-// setup websocket
-const protocol = (window.location.host.includes('localhost')) ? 'ws' : 'wss'
-const socket: GameSocket = io(`${protocol}://${host}`);
-socket.serverTime = 0
-socket.clientTime = 0
-socket.lastPacketTime = Date.now()
+const playerGraphics = new Graphics()
+  .beginFill(0x00ff00)
+  .drawPolygon([new Point(0, 0), new Point(1, 0.5), new Point(0, 1)])
 
-const game = new Game(new PhysicsWorld())
+playerGraphics.scale.x = 30
+playerGraphics.scale.y = 30
+playerGraphics.pivot.x = 0.5
+playerGraphics.pivot.y = 0.5
 
-// main game loop
+app.stage.addChild(playerGraphics)
+
+const localPlayer = ecs.createNewEntity(
+  {
+    position: { x: 200, y: 200 },
+    isLocalPlayer: true,
+    graphics: playerGraphics,
+    static: false,
+    maxAcceleration: 2000
+  },
+  [
+    ComponentTypes.Transform,
+    ComponentTypes.RigidBody,
+    ComponentTypes.Graphics,
+    ComponentTypes.PlayerInput,
+    ComponentTypes.LocalPlayer,
+    ComponentTypes.Collider
+  ]
+)
+
+const debugMenuText = new Text('', { fontSize: '12px', fill: '#ffffff' })
+app.stage.addChild(debugMenuText)
+
 app.ticker.add((deltaFrame: number) => {
   const delta = (deltaFrame / TARGET_FPMS) / 1000
+  ecs.update(delta)
 
-  game.tick();
+  const playersComponent = ecs.entityData[localPlayer.id]
 
-  if (socket.clientTime && socket.lastPacketTime) {
-    const currentTime = socket.clientTime + (Date.now() - socket.lastPacketTime)
-    for (const playerId of Object.keys(game.players)) {
-      const player = game.players[playerId] as ClientPlayerEntity
-      player.tick(delta, currentTime)
-    }
-  }
-
-  // if local player, push current input to server
-  if (game.players[socket.id]) {
-    const player = game.players[socket.id] as ClientPlayerEntity
-    const lastInput = player.inputs[player.inputs.length - 1]
-
-    if (lastInput) {
-      socket.emit('playerInput', player.inputs[player.inputs.length - 1])
-    }
-  }
+  debugMenuText.text = JSON.stringify(playersComponent, (key, value) => (key == 'graphics')? '...' : value, 2)
 })
