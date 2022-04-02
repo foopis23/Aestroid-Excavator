@@ -2,8 +2,10 @@
   "name": "web-game",
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --project client.tsconfig.json && vite build",
+    "dev-client": "vite",
+    "dev-server": "nodemon node-ts src/server/index.ts",
+    "build-client": "tsc --project client.tsconfig.json && vite build",
+    "build-server": "tsc --project server.tsconfig.json",
     "preview": "vite preview"
   },
   "devDependencies": {

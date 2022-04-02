@@ -1,14 +1,11 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "lib": ["ES2021"],
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "target": "ES2021",
-    "moduleResolution": "node",
-    "sourceMap": false,
     "outDir": "dist/server"
   },
-  "lib": ["ES2021"],
-  "include": ["src/server/**/*","src/core/**/*"],
-  "exclude": ["node_modules/**/*"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/client"
+  ]
 }
