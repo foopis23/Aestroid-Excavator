@@ -21,7 +21,9 @@ export interface IPlayerSyncPacket {
 export interface IServerToClientEvents {
   playerJoin: (id: string) => void,
   playerLeft: (id: string) => void
-  playersSync: (data: IPlayerSyncPacket) => void
+  playersSync: (data: IPlayerSyncPacket) => void,
+  spawnEntity: (entityId: number) => void,
+  despawnEntity: (entityId: number) => void,
 }
 
 export interface IClientToServerEvents {

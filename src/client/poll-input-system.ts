@@ -8,16 +8,13 @@ import { useMousePos } from "./input";
 import { isKeyDown } from "./input";
 
 export class PollInputSystem implements ISystem {
-  private getMousePos: () => {x: number, y: number}
-  private removeMouseListener: () => void
-
-  constructor(private app : Application) {
-    const {getMousePos, destroy} = useMousePos(this.app.stage)
+  private getMousePos: () => { x: number, y: number }
+  constructor(private app: Application) {
+    const { getMousePos } = useMousePos(this.app.stage)
     this.getMousePos = getMousePos
-    this.removeMouseListener = destroy
   }
 
-  update(ecs: IECS, dt: number, entity: IEntity): void {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
     const inputComponent = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)

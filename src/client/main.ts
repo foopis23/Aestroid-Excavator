@@ -1,33 +1,24 @@
 import './style.css'
 
-import { Application, Graphics, Point, settings, Text } from 'pixi.js'
+import { COLOR_SCHEME, BASE_RESOLUTION } from './config'
+
+import { Application, Graphics, Point, settings } from 'pixi.js'
 import { ECS } from '../core/ecs'
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
 
 import { ComponentTypes } from '../core/components'
 import { PollInputSystem } from './poll-input-system'
 import { GraphicsSystem } from './graphics-system'
+import { IVector2 } from 'simple-game-math/lib/Vector2'
+
 const TARGET_FPMS = settings.TARGET_FPMS ?? 0.06
 
-const COLOR_SCHEME = {
-  team1: 0xBCED09,
-  team2: 0xFF715B,
-  asteroid: 0xAAAAAA,
-  background: 0x4C5B5C
-}
-
-const debugMenuText = new Text('', { fontSize: '12px', fill: '#ffffff' })
-const baseResolution = {
-  x: 1440,
-  y: 1080
-}
 
 function resizeWindow() {
-  const scale = Math.min(window.innerWidth / baseResolution.x, window.innerHeight / baseResolution.y)
-  app.renderer.resize(scale * baseResolution.x, scale * baseResolution.y)
+  const scale = Math.min(window.innerWidth / BASE_RESOLUTION.x, window.innerHeight / BASE_RESOLUTION.y)
+  app.renderer.resize(scale * BASE_RESOLUTION.x, scale * BASE_RESOLUTION.y)
   app.stage.scale.x = scale
   app.stage.scale.y = scale
-  debugMenuText.resolution = scale
 }
 
 const app = new Application({
@@ -39,9 +30,10 @@ app.stage.interactive = true
 resizeWindow()
 document.body.appendChild(app.view)
 
-let windowResizeTimeout: NodeJS.Timeout | null = null;
+let windowResizeTimeout: NodeJS.Timeout | undefined = undefined;
 window.onresize = () => {
-  clearTimeout(windowResizeTimeout)
+  if (windowResizeTimeout !== undefined)
+    clearTimeout(windowResizeTimeout)
   windowResizeTimeout = setTimeout(resizeWindow, 200)
 }
 
@@ -50,7 +42,7 @@ const ecs = new ECS(
   PlayerInputHandlerSystem,
   PhysicsSystem,
   CollisionSystem,
-  new BoundsSystem({ x: 0, y: 0, w: baseResolution.x, h: baseResolution.y }),
+  new BoundsSystem({ x: 0, y: 0, w: BASE_RESOLUTION.x, h: BASE_RESOLUTION.y }),
   GraphicsSystem
 )
 
@@ -65,35 +57,37 @@ function createPlayerGraphics(color: number) {
   return playerGraphics
 }
 
-const playerGraphics = createPlayerGraphics(COLOR_SCHEME.team1)
+function createPlayer(color: number = COLOR_SCHEME.team1, isLocal: boolean, startLocation: IVector2 = { x: 0, y: 0 }) {
+  const playerGraphics = createPlayerGraphics(color)
+  app.stage.addChild(playerGraphics)
 
-const testOtherPlayer = createPlayerGraphics(COLOR_SCHEME.team2)
-testOtherPlayer.position.set(100, 100)
+  ecs.createNewEntity(
+    {
+      position: startLocation,
+      isLocalPlayer: isLocal,
+      graphics: playerGraphics,
+      static: false,
+      maxAcceleration: 1000,
+      type: 'circle',
+      size: { x: 20, y: 20 },
+      priority: 20
+    },
+    [
+      ComponentTypes.Transform,
+      ComponentTypes.RigidBody,
+      ComponentTypes.Collider,
+      ComponentTypes.PlayerInput,
+      ComponentTypes.Graphics,
+      ComponentTypes.LocalPlayer
+    ]
+  )
+}
 
-app.stage.addChild(playerGraphics)
-app.stage.addChild(testOtherPlayer)
+createPlayer(COLOR_SCHEME.team1, true, { x: BASE_RESOLUTION.x / 2, y: BASE_RESOLUTION.y / 2 })
+createPlayer(COLOR_SCHEME.team2, false, { x: 100, y: 100 })
 
 
-const localPlayer = ecs.createNewEntity(
-  {
-    position: { x: 200, y: 200 },
-    isLocalPlayer: true,
-    graphics: playerGraphics,
-    static: false,
-    maxAcceleration: 1000,
-    type: 'circle',
-    size: { x: 20, y: 20 },
-    priority: 20
-  },
-  [
-    ComponentTypes.Transform,
-    ComponentTypes.RigidBody,
-    ComponentTypes.Graphics,
-    ComponentTypes.PlayerInput,
-    ComponentTypes.LocalPlayer,
-    ComponentTypes.Collider
-  ]
-)
+
 
 for (let i = 0; i < 20; i++) {
   const points = []
@@ -121,7 +115,7 @@ for (let i = 0; i < 20; i++) {
 
   ecs.createNewEntity(
     {
-      position: { x: Math.random() * baseResolution.x, y: Math.random() * baseResolution.y },
+      position: { x: Math.random() * BASE_RESOLUTION.x, y: Math.random() * BASE_RESOLUTION.y },
       graphics: asteroidGraphics,
       static: false,
       maxAcceleration: 1000,
@@ -135,19 +129,13 @@ for (let i = 0; i < 20; i++) {
       ComponentTypes.Transform,
       ComponentTypes.RigidBody,
       ComponentTypes.Graphics,
-      ComponentTypes.Collider
+      ComponentTypes.Collider,
+      ComponentTypes.TransformSync
     ]
   )
 }
 
-
-// app.stage.addChild(debugMenuText)
-
 app.ticker.add((deltaFrame: number) => {
   const delta = (deltaFrame / TARGET_FPMS) / 1000
   ecs.update(delta)
-
-  const playersComponent = ecs.entityData[localPlayer.id]
-
-  debugMenuText.text = JSON.stringify(playersComponent, (key, value) => (key == 'graphics') ? '...' : value, 2)
 })

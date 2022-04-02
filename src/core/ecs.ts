@@ -3,8 +3,8 @@ import { IEntity } from './entity'
 import { ISystem } from './systems'
 
 export interface IECS {
-  entities: IEntity[]
-  entityData: IEntityData[]
+  entities: (IEntity | null)[]
+  entityData: (IEntityData | null)[]
   systems: ISystem[]
   entityCount: number
 
@@ -17,8 +17,8 @@ export interface IECS {
 }
 
 export class ECS implements IECS {
-  entities: IEntity[]
-  entityData: IEntityData[]
+  entities: (IEntity | null)[]
+  entityData: (IEntityData | null)[]
   systems: ISystem[]
 
   private freedEntityIds: number[]
@@ -39,8 +39,12 @@ export class ECS implements IECS {
       ? this.freedEntityIds.pop()
       : this.entities.length
 
+    if (id === undefined) {
+      throw new Error('No more entities available')
+    }
+
     // create entity and component data
-    const entity = {
+    const entity: IEntity = {
       id: id,
       componentMask: 0
     }
@@ -110,6 +114,10 @@ export class ECS implements IECS {
   update(dt: number) {
     for (const system of this.systems) {
       for (const entity of this.entities) {
+        if (entity === undefined || entity === null) {
+          continue
+        }
+
         system.update(this, dt, entity)
       }
     }

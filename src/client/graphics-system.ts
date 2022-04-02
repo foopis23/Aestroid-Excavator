@@ -10,8 +10,10 @@ export const GraphicsSystem: ISystem = {
       return
     }
 
-    graphics.graphics.position.x = transform.position.x
-    graphics.graphics.position.y = transform.position.y
-    graphics.graphics.rotation = transform.rotation
+    if (graphics.graphics) {
+      graphics.graphics.position.x = transform.position.x
+      graphics.graphics.position.y = transform.position.y
+      graphics.graphics.rotation = transform.rotation
+    }
   }
 }

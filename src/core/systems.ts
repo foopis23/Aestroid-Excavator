@@ -37,7 +37,7 @@ export const PhysicsSystem: ISystem = {
 }
 
 export const CollisionSystem: ISystem = {
-  update: function (ecs: IECS, dt: number, entity: IEntity): void {
+  update: function (ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const collider = ecs.getComponent<ColliderComponent>(entity, ComponentTypes.Collider)
 
@@ -50,6 +50,10 @@ export const CollisionSystem: ISystem = {
     }
 
     for (const otherEntity of ecs.entities) {
+      if (otherEntity === null) {
+        continue
+      }
+
       if (otherEntity.id === entity.id) {
         continue
       }
@@ -126,12 +130,12 @@ export const CollisionSystem: ISystem = {
 }
 
 export const PlayerInputHandlerSystem: ISystem = {
-  update: function (ecs: IECS, dt: number, entity: IEntity): void {
+  update: function (ecs: IECS, _dt: number, entity: IEntity): void {
     const playerInput = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
     const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
 
-    if (playerInput && rigidBody) {
+    if (playerInput && rigidBody && transform) {
       rigidBody.acceleration.x = playerInput.moveInput.x * rigidBody.maxAcceleration
       rigidBody.acceleration.y = playerInput.moveInput.y * rigidBody.maxAcceleration
       transform.rotation = playerInput.lookRot
@@ -142,7 +146,7 @@ export const PlayerInputHandlerSystem: ISystem = {
 export class BoundsSystem implements ISystem {
   constructor(private bounds: { x: number, y: number, w: number, h: number }) { }
 
-  update(ecs: IECS, dt: number, entity: IEntity): void {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
 
     if (transform) {

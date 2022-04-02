@@ -8,6 +8,7 @@ export enum ComponentTypes {
   PlayerInput = 8,
   LocalPlayer = 16,
   Graphics = 32,
+  TransformSync = 64
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -16,7 +17,6 @@ export interface IComponent { }
 export interface TransformComponent extends IComponent {
   position: Vector2.IVector2;
   rotation: number;
-  sync: boolean;
 }
 
 export interface RigidBodyComponent extends IComponent {
@@ -43,10 +43,15 @@ export interface LocalPlayerComponent extends IComponent {
 }
 
 export interface GraphicsComponent extends IComponent {
-  graphics: Container;
+  graphics: Container | null;
 }
 
-export interface IEntityData extends TransformComponent, RigidBodyComponent, ColliderComponent, PlayerInputComponent, LocalPlayerComponent, GraphicsComponent { }
+export interface TransformSyncComponent extends IComponent {
+  positionBuffer: Vector2.IVector2[];
+  rotationBuffer: number[];
+}
+
+export interface IEntityData extends TransformComponent, RigidBodyComponent, ColliderComponent, PlayerInputComponent, LocalPlayerComponent, GraphicsComponent, TransformSyncComponent { }
 
 export class EntityData implements IEntityData {
   static: boolean
@@ -58,12 +63,13 @@ export class EntityData implements IEntityData {
   acceleration: Vector2.IVector2
   position: Vector2.IVector2
   rotation: number
-  sync: boolean
   maxAcceleration: number
   isLocalPlayer: boolean;
-  graphics: Container;
+  graphics: Container | null;
   hasDrag: boolean;
   priority: number;
+  positionBuffer: Vector2.IVector2[];
+  rotationBuffer: number[];
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -76,10 +82,11 @@ export class EntityData implements IEntityData {
     this.acceleration = initial.acceleration ?? { x: 0, y: 0 }
     this.position = initial.position ?? { x: 0, y: 0 }
     this.rotation = initial.rotation ?? 0
-    this.sync = initial.sync ?? false
     this.maxAcceleration = initial.maxAcceleration ?? 0
     this.isLocalPlayer = initial.isLocalPlayer ?? false
     this.graphics = initial.graphics ?? null
     this.priority = initial.priority ?? 0
+    this.positionBuffer = initial.positionBuffer ?? []
+    this.rotationBuffer = initial.rotationBuffer ?? []
   }
 }

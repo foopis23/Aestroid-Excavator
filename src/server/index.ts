@@ -16,7 +16,7 @@ import {
 
 import { ECS } from '../core/ecs'
 import { CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
-import { ComponentTypes, EntityData } from '../core/components'
+import { ComponentTypes } from '../core/components'
 import { TransformSyncSystem } from './transform-sync'
 
 const SERVER_TICK_RATE = 1000 / 60
@@ -66,18 +66,29 @@ function onConnect(socket: Socket): void {
   socket.on('playerInput', (input: IPlayerInputPacket) => handlePlayerInputPacket(input))
 
   // emit initial data
-  this.serverSocket.emit('spawnEntity', player.id)
+  serverSocket.emit('spawnEntity', player.id)
 }
 
 function onDisconnect(socket: Socket) {
+  const playerId = socketIdToPlayerEntityId.get(socket.id)
+  if (playerId === undefined) {
+    return
+  }
+  serverSocket.emit('despawnEntity', playerId)
+  ecs.destroyEntityById(playerId)
   socketIdToPlayerEntityId.delete(socket.id)
-  ecs.destroyEntityById(socketIdToPlayerEntityId.get(socket.id))
-  this.serverSocket.emit('despawnEntity', socketIdToPlayerEntityId.get(socket.id))
 }
 
 function handlePlayerInputPacket(inputPacket: IPlayerInputPacket) {
   const entity = ecs.entities[inputPacket.entityId]
+  if (entity === undefined || entity === null) {
+    return 
+  }
+
   const inputData = ecs.getComponent<IPlayerInputPacket>(entity, ComponentTypes.PlayerInput)
+  if (!inputData) {
+    return
+  }
   inputData.moveInput = inputPacket.moveInput
   inputData.lookRot = inputPacket.lookRot
 }
