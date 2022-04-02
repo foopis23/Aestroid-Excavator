@@ -1,6 +1,6 @@
 import { Application } from "pixi.js";
 import { Vector2 } from "simple-game-math";
-import { ComponentTypes, PlayerInputComponent, TransformComponent } from "../core/components";
+import { ComponentTypes, LocalPlayerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
 import { IECS } from "../core/ecs";
 import { IEntity } from "../core/entity";
 import { ISystem } from "../core/systems";
@@ -20,8 +20,13 @@ export class PollInputSystem implements ISystem {
   update(ecs: IECS, dt: number, entity: IEntity): void {
     const inputComponent = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
 
-    if (!inputComponent) {
+    if (!inputComponent || !transform || !localPlayer) {
+      return
+    }
+
+    if (!localPlayer.isLocalPlayer) {
       return
     }
 

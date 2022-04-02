@@ -30,6 +30,7 @@ export interface ColliderComponent extends IComponent {
   size: Vector2.IVector2;
   type: 'circle' | 'rectangle';
   static: boolean;
+  priority: number;
 }
 
 export interface PlayerInputComponent extends IComponent {
@@ -62,6 +63,7 @@ export class EntityData implements IEntityData {
   isLocalPlayer: boolean;
   graphics: Container;
   hasDrag: boolean;
+  priority: number;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -78,6 +80,6 @@ export class EntityData implements IEntityData {
     this.maxAcceleration = initial.maxAcceleration ?? 0
     this.isLocalPlayer = initial.isLocalPlayer ?? false
     this.graphics = initial.graphics ?? null
+    this.priority = initial.priority ?? 0
   }
-
 }

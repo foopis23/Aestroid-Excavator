@@ -21,7 +21,7 @@
     "dotenv-defaults": "^5.0.0",
     "pixi.js": "^6.2.2",
     "simple-game-math": "^1.0.2",
-    "simple-game-physics": "^1.0.2",
+    "simple-game-physics": "^1.0.3",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1"
   }
