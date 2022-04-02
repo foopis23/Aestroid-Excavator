@@ -18,7 +18,12 @@ export function useMousePos (container: Container): { getMousePos: () => {x: num
     mousePos.y = e.data.global.y
   })
 
-  const getMousePos = (): Vector2.IVector2 => mousePos
+  const getMousePos = (): Vector2.IVector2 => {
+    return {
+      x: mousePos.x / container.scale.x,
+      y: mousePos.y / container.scale.y
+    }
+  }
   const destroy = (): void => {
     container.removeListener('mousemove')
   }

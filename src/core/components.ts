@@ -22,7 +22,7 @@ export interface TransformComponent extends IComponent {
 export interface RigidBodyComponent extends IComponent {
   velocity: Vector2.IVector2;
   acceleration: Vector2.IVector2;
-  dragScale: number;
+  hasDrag: boolean;
   maxAcceleration: number;
 }
 
@@ -49,7 +49,6 @@ export interface IEntityData extends TransformComponent, RigidBodyComponent, Col
 
 export class EntityData implements IEntityData {
   static: boolean
-  dragScale: number
   moveInput: Vector2.IVector2
   lookRot: number
   size: Vector2.IVector2
@@ -62,10 +61,11 @@ export class EntityData implements IEntityData {
   maxAcceleration: number
   isLocalPlayer: boolean;
   graphics: Container;
+  hasDrag: boolean;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
-    this.dragScale = initial.dragScale ?? 0.8
+    this.hasDrag = initial.hasDrag ?? true
     this.moveInput = initial.moveInput ?? { x: 0, y: 0 }
     this.lookRot = initial.lookRot ?? 0
     this.size = initial.size ?? { x: 30, y: 30 }
@@ -79,4 +79,5 @@ export class EntityData implements IEntityData {
     this.isLocalPlayer = initial.isLocalPlayer ?? false
     this.graphics = initial.graphics ?? null
   }
+
 }

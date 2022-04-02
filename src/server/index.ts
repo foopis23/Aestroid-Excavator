@@ -33,7 +33,6 @@ const serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, II
 
 // setup ecs
 const ecs = new ECS(
-  EntityData,
   PhysicsSystem,
   CollisionSystem,
   PlayerInputHandlerSystem,
