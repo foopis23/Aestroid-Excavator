@@ -18,11 +18,50 @@ const {
 } = kinematics
 
 export interface ISystem {
+  preUpdate(ecs: IECS, dt: number): void;
   update(ecs: IECS, dt: number, entity: IEntity): void;
+  postUpdate(ecs: IECS, dt: number): void;
 }
 
-export const PhysicsSystem: ISystem = {
-  update: function (ecs: IECS, dt: number, entity: IEntity): void {
+export abstract class AbstractSimpleSystem implements ISystem{
+  abstract update(ecs: IECS, dt: number, entity: IEntity): void
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  postUpdate(): void {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  preUpdate(): void {}
+}
+
+export abstract class AbstractNetworkSyncSystem implements ISystem {
+  protected timeSinceLastSync: number;
+  constructor(protected syncDelta: number) {
+    this.timeSinceLastSync = 0
+  }
+
+  preUpdate(_ecs: IECS, dt: number): void {
+    this.timeSinceLastSync += dt
+  }
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    if (this.timeSinceLastSync < this.syncDelta) {
+      return
+    }
+
+    this.sync(ecs, entity)
+  }
+
+  abstract sync(ecs: IECS, entity: IEntity): void;
+
+  postUpdate(): void {
+    if (this.timeSinceLastSync < this.syncDelta) {
+      return
+    }
+
+    this.timeSinceLastSync = 0
+  }
+  
+}
+
+export class PhysicsSystem extends AbstractSimpleSystem {
+  update (ecs: IECS, dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
 
@@ -36,8 +75,8 @@ export const PhysicsSystem: ISystem = {
   }
 }
 
-export const CollisionSystem: ISystem = {
-  update: function (ecs: IECS, _dt: number, entity: IEntity): void {
+export class CollisionSystem extends AbstractSimpleSystem {
+  update (ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const collider = ecs.getComponent<ColliderComponent>(entity, ComponentTypes.Collider)
 
@@ -129,8 +168,8 @@ export const CollisionSystem: ISystem = {
   }
 }
 
-export const PlayerInputHandlerSystem: ISystem = {
-  update: function (ecs: IECS, _dt: number, entity: IEntity): void {
+export class PlayerInputHandlerSystem extends AbstractSimpleSystem {
+  update (ecs: IECS, _dt: number, entity: IEntity): void {
     const playerInput = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
     const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
@@ -143,8 +182,10 @@ export const PlayerInputHandlerSystem: ISystem = {
   }
 }
 
-export class BoundsSystem implements ISystem {
-  constructor(private bounds: { x: number, y: number, w: number, h: number }) { }
+export class BoundsSystem extends AbstractSimpleSystem {
+  constructor(private bounds: { x: number, y: number, w: number, h: number }) {
+    super();
+  }
 
   update(ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)

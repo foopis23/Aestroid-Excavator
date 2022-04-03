@@ -24,12 +24,19 @@ export interface SpawnEntityPacket extends EntityPacket {
   type: EntityType
 }
 
+export interface SyncTransformPacket extends EntityPacket {
+  position: Vector2.IVector2,
+  rotation: number,
+}
+
 export interface IServerToClientEvents {
-  playerJoin: (id: string) => void,
-  playerLeft: (id: string) => void
-  playersSync: (data: IPlayerSyncPacket) => void,
-  spawnEntity: (entityId: SpawnEntityPacket) => void,
-  despawnEntity: (entityId: EntityPacket) => void,
+  start: () => void,
+  waiting: () => void,
+  full: () => void,
+  assignPlayerId: (playerId: number) => void,
+  spawnEntity: (data: SpawnEntityPacket) => void,
+  despawnEntity: (data: EntityPacket) => void,
+  syncTransform: (data: SyncTransformPacket) => void,
 }
 
 export interface IClientToServerEvents {

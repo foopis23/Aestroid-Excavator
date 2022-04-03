@@ -1,14 +1,15 @@
 import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent } from "../core/components";
-import { ISystem } from "../core/systems";
+import { AbstractNetworkSyncSystem, AbstractSimpleSystem, ISystem } from "../core/systems";
 import { Application } from "pixi.js";
 import { Vector2 } from "simple-game-math";
 import { IECS } from "../core/ecs";
 import { IEntity } from "../core/entity";
 import { useMousePos } from "./input";
 import { isKeyDown } from "./input";
+import { Socket } from "socket.io-client";
 
-export const GraphicsSystem: ISystem = {
-  update: (ecs, _dt, entity) => {
+export class GraphicsSystem extends AbstractSimpleSystem {
+  update (ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const graphics = ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
 
@@ -24,9 +25,10 @@ export const GraphicsSystem: ISystem = {
   }
 }
 
-export class PollInputSystem implements ISystem {
+export class PollInputSystem extends AbstractSimpleSystem {
   private getMousePos: () => { x: number, y: number }
   constructor(private app: Application) {
+    super()
     const { getMousePos } = useMousePos(this.app.stage)
     this.getMousePos = getMousePos
   }
@@ -74,5 +76,32 @@ export class PollInputSystem implements ISystem {
 
     inputComponent.moveInput = moveInput
     inputComponent.lookRot = lookRot
+  }
+}
+
+export class SyncInputSystem extends AbstractNetworkSyncSystem  {
+  constructor(syncDelta: number, private socket: Socket) {
+    super(syncDelta)
+  }
+  
+  sync(ecs: IECS, entity: IEntity): void {
+    const inputComponent = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
+    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+
+    if (!inputComponent || !transform || !localPlayer) {
+      return
+    }
+
+    if (!localPlayer.isLocalPlayer) {
+      return
+    }
+
+    this.socket.emit('playerInput', {
+      moveInput: inputComponent.moveInput,
+      lookRot: inputComponent.lookRot,
+      entityId: entity.id,
+      time: Date.now()
+    })
   }
 }

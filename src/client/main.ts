@@ -2,17 +2,17 @@ import './style.css'
 
 import { COLOR_SCHEME, BASE_RESOLUTION } from './config'
 
-import { Application, Graphics, Point, settings } from 'pixi.js'
+import { Application, Graphics, Point, settings, Text } from 'pixi.js'
 import { ECS } from '../core/ecs'
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
 
-import { ComponentTypes, GraphicsComponent } from '../core/components'
-import { GraphicsSystem, PollInputSystem } from './systems'
+import { ComponentTypes, GraphicsComponent, TransformComponent } from '../core/components'
+import { GraphicsSystem, PollInputSystem, SyncInputSystem } from './systems'
 import { createPlayer } from './player'
 import { useAppScaler } from './window'
 import { io } from 'socket.io-client'
-import { EntityPacket, SpawnEntityPacket } from '../core/net'
-import { EntityType, IEntity } from '../core/entity'
+import { EntityPacket, SpawnEntityPacket, SyncTransformPacket } from '../core/net'
+import { EntityType } from '../core/entity'
 
 const TARGET_FPMS = settings.TARGET_FPMS ?? 0.06
 
@@ -25,30 +25,57 @@ app.stage.interactive = true
 useAppScaler(app)
 document.body.appendChild(app.view)
 
-const ecs = new ECS(
-  new PollInputSystem(app),
-  PlayerInputHandlerSystem,
-  PhysicsSystem,
-  CollisionSystem,
-  new BoundsSystem({ x: 0, y: 0, w: BASE_RESOLUTION.x, h: BASE_RESOLUTION.y }),
-  GraphicsSystem
-)
+const statusText = new Text('', { fontSize: 32, fill: 0xFFFFFF })
+statusText.zIndex = 1000
+statusText.position.set(10, 10)
+app.stage.addChild(statusText)
 
 const socket = io('ws://localhost:9500')
+statusText.text = "Connecting to Server..."
 let localPlayerId: number | undefined = undefined;
-socket.on('playerId', (playerId) => {
+
+const ecs = new ECS(
+  new PollInputSystem(app),
+  // PlayerInputHandlerSystem,
+  new SyncInputSystem(1 / 60, socket),
+  // PhysicsSystem,
+  // CollisionSystem,
+  new BoundsSystem({ x: 0, y: 0, w: BASE_RESOLUTION.x, h: BASE_RESOLUTION.y }),
+  new GraphicsSystem()
+)
+
+socket.on('waiting', () => {
+  statusText.text = "Waiting for Opponent"
+})
+
+socket.on('disconnect', () => {
+  app.stage.removeChildren()
+  app.stage.addChild(statusText)
+  statusText.text = "Disconnected from Server"
+  localPlayerId = undefined
+})
+
+socket.on('start', () => {
+  statusText.text = ""
+  app.ticker.add((deltaFrame: number) => {
+    const delta = (deltaFrame / TARGET_FPMS) / 1000
+    ecs.update(delta)
+  })
+})
+
+socket.on('assignPlayerId', (playerId) => {
   console.log('Recieved Player ID', playerId)
   localPlayerId = playerId
 })
 
 socket.on('spawnEntity', (data: SpawnEntityPacket) => {
   console.log('Spawning Entity', data.entityId)
-  
+
   if (!ecs.isEntityIdFree(data.entityId)) {
     return
   }
 
-  switch(data.type) {
+  switch (data.type) {
     case EntityType.Player:
       {
         const player = createPlayer(
@@ -56,15 +83,58 @@ socket.on('spawnEntity', (data: SpawnEntityPacket) => {
           ecs,
           localPlayerId == data.entityId,
           data.initial ?? {},
-          (localPlayerId == data.entityId)? COLOR_SCHEME.team1 : COLOR_SCHEME.team2
+          (localPlayerId == data.entityId) ? COLOR_SCHEME.team1 : COLOR_SCHEME.team2
         )
         console.log('Created Player', player.id)
         console.log('Player Initial', {
           localPlayer: localPlayerId == data.entityId,
           dataInitial: data.initial ?? {},
-          color: (localPlayerId == data.entityId)? COLOR_SCHEME.team1 : COLOR_SCHEME.team2
+          color: (localPlayerId == data.entityId) ? COLOR_SCHEME.team1 : COLOR_SCHEME.team2
         })
       }
+      break;
+    case EntityType.Asteroid:
+      {
+        const points = []
+        const numPoints = Math.random() * 6 + 4
+
+        if (data.initial !== undefined) {
+          const maxRadius = data.initial.size.x
+          let trueRadius = 0
+          for (let p = 0; p < numPoints; p++) {
+            const angle = p * Math.PI * 2 / numPoints
+            const distance = (Math.random() * (maxRadius - (maxRadius * 0.5))) + (maxRadius * 0.5)
+            points.push(new Point(Math.cos(angle) * distance, Math.sin(angle) * distance))
+            if (trueRadius < distance) {
+              trueRadius = distance
+            }
+          }
+          const asteroidGraphics = new Graphics()
+            .lineStyle(3, COLOR_SCHEME.asteroid)
+            .drawPolygon(points)
+
+          asteroidGraphics.pivot.x = 0.5
+          asteroidGraphics.pivot.y = 0.5
+
+          app.stage.addChild(asteroidGraphics)
+
+          ecs.createNewEntity(
+            EntityType.Asteroid,
+            {
+              ...data.initial,
+              graphics: asteroidGraphics,
+            },
+            [
+              ComponentTypes.Transform,
+              ComponentTypes.RigidBody,
+              ComponentTypes.Graphics,
+              ComponentTypes.Collider,
+              ComponentTypes.TransformSync
+            ]
+          )
+        }
+      }
+
       break;
     default:
       throw new Error("Unknown Entity Type From Server")
@@ -84,53 +154,18 @@ socket.on('despawnEntity', (data: EntityPacket) => {
   }
 })
 
+socket.on('syncTransform', (data: SyncTransformPacket) => {
+  const entity = ecs.entities[data.entityId]
+  if (entity) {
+    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    if (transform) {
+      transform.position = data.position
+      transform.rotation = data.rotation
+    }
+  }
+})
+
 
 // for (let i = 0; i < 20; i++) {
-//   const points = []
-//   const numPoints = Math.random() * 6 + 4
-//   const maxRadius = (Math.random() * 60) + 20
-//   let trueRadius = 0
-//   for (let p = 0; p < numPoints; p++) {
-//     const angle = p * Math.PI * 2 / numPoints
-//     const distance = (Math.random() * (maxRadius - (maxRadius * 0.5))) + (maxRadius * 0.5)
-//     points.push(new Point(Math.cos(angle) * distance, Math.sin(angle) * distance))
-//     if (trueRadius < distance) {
-//       trueRadius = distance
-//     }
-//   }
-//   const asteroidGraphics = new Graphics()
-//     .lineStyle(3, COLOR_SCHEME.asteroid)
-//     .drawPolygon(points)
 
-//   asteroidGraphics.pivot.x = 0.5
-//   asteroidGraphics.pivot.y = 0.5
-
-//   app.stage.addChild(asteroidGraphics)
-
-//   ecs.createNewEntity(
-//     EntityType.Asteroid,
-//     {
-//       position: { x: Math.random() * BASE_RESOLUTION.x, y: Math.random() * BASE_RESOLUTION.y },
-//       graphics: asteroidGraphics,
-//       static: false,
-//       maxAcceleration: 1000,
-//       size: { x: trueRadius, y: trueRadius },
-//       hasDrag: false,
-//       velocity: { x: Math.random() * 20 - 10, y: Math.random() * 20 - 10 },
-//       type: 'circle',
-//       priority: trueRadius
-//     },
-//     [
-//       ComponentTypes.Transform,
-//       ComponentTypes.RigidBody,
-//       ComponentTypes.Graphics,
-//       ComponentTypes.Collider,
-//       ComponentTypes.TransformSync
-//     ]
-//   )
 // }
-
-app.ticker.add((deltaFrame: number) => {
-  const delta = (deltaFrame / TARGET_FPMS) / 1000
-  ecs.update(delta)
-})

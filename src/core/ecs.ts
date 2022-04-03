@@ -116,6 +116,10 @@ export class ECS implements IECS {
   }
   
   update(dt: number) {
+    for(const system of this.systems) {
+      system.preUpdate(this, dt)
+    }
+
     for (const system of this.systems) {
       for (const entity of this.entities) {
         if (entity === undefined || entity === null) {
@@ -124,6 +128,10 @@ export class ECS implements IECS {
 
         system.update(this, dt, entity)
       }
+    }
+
+    for (const system of this.systems) {
+      system.postUpdate(this, dt)
     }
   }
 
