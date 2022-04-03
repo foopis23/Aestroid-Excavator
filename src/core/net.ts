@@ -1,5 +1,6 @@
 import { Vector2 } from "simple-game-math"
-import { PlayerInputComponent } from "./components";
+import { IEntityData, PlayerInputComponent } from "./components";
+import { EntityType } from "./entity";
 export interface EntityPacket {
   entityId: number,
   time: number
@@ -18,12 +19,17 @@ export interface IPlayerSyncPacket {
   time: number
 }
 
+export interface SpawnEntityPacket extends EntityPacket {
+  initial?: Partial<IEntityData>
+  type: EntityType
+}
+
 export interface IServerToClientEvents {
   playerJoin: (id: string) => void,
   playerLeft: (id: string) => void
   playersSync: (data: IPlayerSyncPacket) => void,
-  spawnEntity: (entityId: number) => void,
-  despawnEntity: (entityId: number) => void,
+  spawnEntity: (entityId: SpawnEntityPacket) => void,
+  despawnEntity: (entityId: EntityPacket) => void,
 }
 
 export interface IClientToServerEvents {

@@ -1,5 +1,5 @@
 import { ComponentTypes, EntityData, IComponent, IEntityData } from './components'
-import { IEntity } from './entity'
+import { EntityType, IEntity } from './entity'
 import { ISystem } from './systems'
 
 export interface IECS {
@@ -8,7 +8,7 @@ export interface IECS {
   systems: ISystem[]
   entityCount: number
 
-  createNewEntity(initial: Partial<IComponent>, enabledComponents: ComponentTypes[]): IEntity,
+  createNewEntity(type: EntityType, initial: Partial<IComponent>, enabledComponents: ComponentTypes[]): IEntity,
   destroyEntity(entity: IEntity): void,
   hasComponent(entity: IEntity, component: ComponentTypes): boolean,
   getComponent<T = IEntityData>(entity: IEntity, component: ComponentTypes): T | undefined,
@@ -33,7 +33,7 @@ export class ECS implements IECS {
     this._entityCount = 0
   }
 
-  createNewEntity(initial: Partial<IEntityData> = {}, enabledComponents: ComponentTypes[]): IEntity {
+  createNewEntity(type: EntityType, initial: Partial<IEntityData> = {}, enabledComponents: ComponentTypes[]): IEntity {
     // find entity id
     const id = (this.freedEntityIds.length > 0)
       ? this.freedEntityIds.pop()
@@ -46,7 +46,8 @@ export class ECS implements IECS {
     // create entity and component data
     const entity: IEntity = {
       id: id,
-      componentMask: 0
+      componentMask: 0,
+      type
     }
     const component = new EntityData(initial)
 
@@ -76,7 +77,6 @@ export class ECS implements IECS {
   }
 
   destroyEntityById(id: number) {
-    //TODO: fix this bullshit splicing bullshit
     if (id > this.entities.length - 1) {
       throw new Error('Entity not found. Id out of range')
     }
@@ -111,6 +111,10 @@ export class ECS implements IECS {
     return entity
   }
 
+  isEntityIdFree(id: number): boolean {
+    return this.entities[id] === null || this.entities[id] === undefined
+  }
+  
   update(dt: number) {
     for (const system of this.systems) {
       for (const entity of this.entities) {

@@ -16,8 +16,9 @@ import {
 
 import { ECS } from '../core/ecs'
 import { CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
-import { ComponentTypes } from '../core/components'
+import { ComponentTypes, IEntityData } from '../core/components'
 import { TransformSyncSystem } from './transform-sync'
+import { EntityType } from '../core/entity'
 
 const SERVER_TICK_RATE = 1000 / 60
 
@@ -46,12 +47,18 @@ serverSocket.on("connection", (socket: Socket) => onConnect(socket))
 
 function onConnect(socket: Socket): void {
   // setup intial data
+  const initialPlayerValues: Partial<IEntityData> = {
+    static: false,
+    type: 'circle',
+    maxAcceleration: 1000,
+    size: { x: 20, y: 20 },
+    position: { x: Math.random() * 1340 + 100, y: Math.random() * 980 + 100 },
+    priority: 20
+  }
+
   const player = ecs.createNewEntity(
-    {
-      size: { x: 30, y: 30 },
-      static: false,
-      type: 'circle'
-    },
+    EntityType.Player,
+    initialPlayerValues,
     [
       ComponentTypes.Transform,
       ComponentTypes.PlayerInput,
@@ -62,11 +69,30 @@ function onConnect(socket: Socket): void {
 
   socketIdToPlayerEntityId.set(socket.id, player.id)
   socket.emit('playerId', player.id)
+
+  for (const entity of ecs.entities) {
+    if (entity) {
+      console.log("spawnEntity", entity.id)
+      const entityData = ecs.entityData[entity.id]
+      socket.emit('spawnEntity', {
+        entityId: entity.id,
+        time: Date.now(),
+        initial: entityData ?? {},
+        type: entity.type
+      })
+    }
+  }
+
   socket.on('disconnect', () => onDisconnect(socket))
   socket.on('playerInput', (input: IPlayerInputPacket) => handlePlayerInputPacket(input))
 
   // emit initial data
-  serverSocket.emit('spawnEntity', player.id)
+  serverSocket.emit('spawnEntity', {
+    entityId: player.id,
+    type: EntityType.Player,
+    time: Date.now(),
+    initial: initialPlayerValues
+  })
 }
 
 function onDisconnect(socket: Socket) {
@@ -74,7 +100,7 @@ function onDisconnect(socket: Socket) {
   if (playerId === undefined) {
     return
   }
-  serverSocket.emit('despawnEntity', playerId)
+  serverSocket.emit('despawnEntity', { entityId: playerId, time: Date.now() })
   ecs.destroyEntityById(playerId)
   socketIdToPlayerEntityId.delete(socket.id)
 }
@@ -82,7 +108,7 @@ function onDisconnect(socket: Socket) {
 function handlePlayerInputPacket(inputPacket: IPlayerInputPacket) {
   const entity = ecs.entities[inputPacket.entityId]
   if (entity === undefined || entity === null) {
-    return 
+    return
   }
 
   const inputData = ecs.getComponent<IPlayerInputPacket>(entity, ComponentTypes.PlayerInput)

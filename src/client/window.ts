@@ -21,7 +21,7 @@ export function useAppScaler(app: Application) {
 
   resizeApplication()
   return {
-    removeAppScaler: window.removeEventListener('resize', onResizeWindow)
+    removeAppScaler: () => window.removeEventListener('resize', onResizeWindow)
   }
 }
 

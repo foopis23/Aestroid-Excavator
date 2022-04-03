@@ -7,5 +7,6 @@ export enum EntityType {
 
 export interface IEntity {
   id: number,
-  componentMask: number
+  componentMask: number,
+  type: EntityType
 }

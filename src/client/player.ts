@@ -1,8 +1,7 @@
 import { Application, Graphics, Point } from "pixi.js"
-import { IVector2 } from "simple-game-math/lib/Vector2"
-import { ComponentTypes } from "../core/components"
+import { ComponentTypes, IEntityData } from "../core/components"
 import { ECS } from "../core/ecs"
-import { COLOR_SCHEME } from "./config"
+import { EntityType } from "../core/entity"
 
 export function createPlayerGraphics(color: number) {
   const playerGraphics = new Graphics()
@@ -15,21 +14,19 @@ export function createPlayerGraphics(color: number) {
   return playerGraphics
 }
 
-export function createPlayer(app: Application, ecs: ECS, color: number = COLOR_SCHEME.team1, isLocal: boolean, startLocation: IVector2 = { x: 0, y: 0 }) {
+export function createPlayer(app: Application, ecs: ECS, isLocal: boolean, initial: Partial<IEntityData>, color: number) {
   const playerGraphics = createPlayerGraphics(color)
   app.stage.addChild(playerGraphics)
 
-  ecs.createNewEntity(
-    {
-      position: startLocation,
-      isLocalPlayer: isLocal,
-      graphics: playerGraphics,
-      static: false,
-      maxAcceleration: 1000,
-      type: 'circle',
-      size: { x: 20, y: 20 },
-      priority: 20
-    },
+  const initialPlayerData: Partial<IEntityData> = {
+    ...initial,
+    isLocalPlayer: isLocal,
+    graphics: playerGraphics
+  }
+
+  return ecs.createNewEntity(
+    EntityType.Player,
+    initialPlayerData,
     [
       ComponentTypes.Transform,
       ComponentTypes.RigidBody,
