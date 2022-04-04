@@ -6,8 +6,8 @@ import { Application, Graphics, Point, settings, Text } from 'pixi.js'
 import { ECS } from '../core/ecs'
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
 
-import { ComponentTypes, GraphicsComponent, TransformComponent } from '../core/components'
-import { GraphicsSystem, PollInputSystem, SyncInputSystem } from './systems'
+import { ComponentTypes, GraphicsComponent, TransformSyncComponent } from '../core/components'
+import { ClientPredictionSystem, GraphicsSystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from './systems'
 import { createPlayer } from './player'
 import { useAppScaler } from './window'
 import { io } from 'socket.io-client'
@@ -36,11 +36,13 @@ let localPlayerId: number | undefined = undefined;
 
 const ecs = new ECS(
   new PollInputSystem(app),
-  // PlayerInputHandlerSystem,
-  new SyncInputSystem(1 / 60, socket),
-  // PhysicsSystem,
-  // CollisionSystem,
+  new SyncInputSystem(1 / 30, socket),
+  new PlayerInputHandlerSystem(),
+  new PhysicsSystem(),
+  new CollisionSystem(),
   new BoundsSystem({ x: 0, y: 0, w: BASE_RESOLUTION.x, h: BASE_RESOLUTION.y }),
+  new TransformSmoothingSystem(200),
+  new ClientPredictionSystem(),
   new GraphicsSystem()
 )
 
@@ -64,7 +66,7 @@ socket.on('start', () => {
 })
 
 socket.on('assignPlayerId', (playerId) => {
-  console.log('Recieved Player ID', playerId)
+  console.log('Received Player ID', playerId)
   localPlayerId = playerId
 })
 
@@ -157,15 +159,15 @@ socket.on('despawnEntity', (data: EntityPacket) => {
 socket.on('syncTransform', (data: SyncTransformPacket) => {
   const entity = ecs.entities[data.entityId]
   if (entity) {
-    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
-    if (transform) {
-      transform.position = data.position
-      transform.rotation = data.rotation
+    const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync)
+    if (transformSync) {
+      transformSync.transformBuffer.push({
+        time: data.time,
+        value: {
+          position: data.position,
+          rotation: data.rotation,
+        }
+      })
     }
   }
 })
-
-
-// for (let i = 0; i < 20; i++) {
-
-// }

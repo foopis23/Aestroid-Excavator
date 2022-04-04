@@ -36,6 +36,7 @@ export interface ColliderComponent extends IComponent {
 export interface PlayerInputComponent extends IComponent {
   moveInput: Vector2.IVector2;
   lookRot: number;
+  inputBuffer: {moveInput: Vector2.IVector2, lookRot: number, time: number}[];
 }
 
 export interface LocalPlayerComponent extends IComponent {
@@ -47,8 +48,8 @@ export interface GraphicsComponent extends IComponent {
 }
 
 export interface TransformSyncComponent extends IComponent {
-  positionBuffer: Vector2.IVector2[];
-  rotationBuffer: number[];
+  transformBuffer: { value: TransformComponent, time: number }[];
+  localTransformBuffer: {value: TransformComponent, time: number}[];
 }
 
 export interface IEntityData extends TransformComponent, RigidBodyComponent, ColliderComponent, PlayerInputComponent, LocalPlayerComponent, GraphicsComponent, TransformSyncComponent { }
@@ -68,8 +69,9 @@ export class EntityData implements IEntityData {
   graphics: Container | null;
   hasDrag: boolean;
   priority: number;
-  positionBuffer: Vector2.IVector2[];
-  rotationBuffer: number[];
+  transformBuffer: { value: TransformComponent, time: number }[];
+  inputBuffer: { moveInput: Vector2.IVector2; lookRot: number; time: number; }[];
+  localTransformBuffer: { value: TransformComponent; time: number; }[];
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -86,7 +88,8 @@ export class EntityData implements IEntityData {
     this.isLocalPlayer = initial.isLocalPlayer ?? false
     this.graphics = initial.graphics ?? null
     this.priority = initial.priority ?? 0
-    this.positionBuffer = initial.positionBuffer ?? []
-    this.rotationBuffer = initial.rotationBuffer ?? []
+    this.transformBuffer = initial.transformBuffer ?? []
+    this.inputBuffer = initial.inputBuffer ?? []
+    this.localTransformBuffer = initial.localTransformBuffer ?? []
   }
 }

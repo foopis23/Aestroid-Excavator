@@ -33,7 +33,8 @@ export function createPlayer(app: Application, ecs: ECS, isLocal: boolean, initi
       ComponentTypes.Collider,
       ComponentTypes.PlayerInput,
       ComponentTypes.Graphics,
-      ComponentTypes.LocalPlayer
+      ComponentTypes.LocalPlayer,
+      ComponentTypes.TransformSync
     ]
   )
 }

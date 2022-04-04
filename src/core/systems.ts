@@ -1,5 +1,5 @@
 import { collisions, kinematics } from "simple-game-physics";
-import { ColliderComponent, ComponentTypes, PlayerInputComponent, RigidBodyComponent, TransformComponent } from "./components";
+import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent } from "./components";
 import { IECS } from "./ecs";
 import { IEntity } from "./entity";
 
@@ -23,12 +23,12 @@ export interface ISystem {
   postUpdate(ecs: IECS, dt: number): void;
 }
 
-export abstract class AbstractSimpleSystem implements ISystem{
+export abstract class AbstractSimpleSystem implements ISystem {
   abstract update(ecs: IECS, dt: number, entity: IEntity): void
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  postUpdate(): void {}
+  postUpdate(): void { }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  preUpdate(): void {}
+  preUpdate(): void { }
 }
 
 export abstract class AbstractNetworkSyncSystem implements ISystem {
@@ -57,128 +57,165 @@ export abstract class AbstractNetworkSyncSystem implements ISystem {
 
     this.timeSinceLastSync = 0
   }
-  
+
+}
+
+export function doPhysicsLoop(ecs: IECS, dt: number, entity: IEntity) {
+  const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+  const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
+
+  if (rigidBody && transform) {
+    // if in browser and not local player, don't apply physics
+    if (typeof process !== 'object') {
+      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+      if (!localPlayer || !localPlayer.isLocalPlayer) {
+        return
+      }
+    }
+
+    rigidBody.velocity = applyAcceleration(rigidBody.velocity, rigidBody.acceleration, dt)
+    if (rigidBody.hasDrag) {
+      rigidBody.velocity = applyDrag(rigidBody.velocity, 150, dt)
+    }
+    transform.position = applyVelocity(transform.position, rigidBody.velocity, dt)
+  }
 }
 
 export class PhysicsSystem extends AbstractSimpleSystem {
-  update (ecs: IECS, dt: number, entity: IEntity): void {
-    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
-    const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
+  update(ecs: IECS, dt: number, entity: IEntity): void {
+    doPhysicsLoop(ecs, dt, entity)
+  }
+}
 
-    if (rigidBody && transform) {
-      rigidBody.velocity = applyAcceleration(rigidBody.velocity, rigidBody.acceleration, dt)
-      if (rigidBody.hasDrag) {
-        rigidBody.velocity = applyDrag(rigidBody.velocity, 150, dt)
-      }
-      transform.position = applyVelocity(transform.position, rigidBody.velocity, dt)
+export function doCollisionLoop(ecs: IECS, entity: IEntity) {
+  const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+  const collider = ecs.getComponent<ColliderComponent>(entity, ComponentTypes.Collider)
+
+  // if in browser and not local player, don't apply collisions
+  if (typeof process !== 'object') {
+    const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+    if (!localPlayer || !localPlayer.isLocalPlayer) {
+      return
+    }
+  }
+
+  if (!collider || !transform) {
+    return
+  }
+
+  if (collider.static) {
+    return
+  }
+
+  for (const otherEntity of ecs.entities) {
+    if (otherEntity === null) {
+      continue
+    }
+
+    if (otherEntity.id === entity.id) {
+      continue
+    }
+
+    const otherTransform = ecs.getComponent<TransformComponent>(otherEntity, ComponentTypes.Transform)
+    const otherCollider = ecs.getComponent<ColliderComponent>(otherEntity, ComponentTypes.Collider)
+
+    if (!otherTransform || !otherCollider) {
+      continue
+    }
+
+    if (otherCollider.priority < collider.priority) {
+      continue
+    }
+
+    if (
+      collider.type === 'circle'
+      && otherCollider.type === 'circle'
+      && isCircleVsCircleCollision(
+        transform.position,
+        otherTransform.position,
+        collider.size.x,
+        otherCollider.size.x
+      )
+    ) {
+      transform.position = resolveCircleVsCircleCollision(
+        transform.position,
+        otherTransform.position,
+        collider.size.x,
+        otherCollider.size.x
+      )
+      continue
+    }
+
+    if (
+      collider.type === 'circle'
+      && otherCollider.type === 'rectangle'
+      && isCircleVsRectangleCollision(
+        transform.position,
+        collider.size.x,
+        otherTransform.position,
+        otherCollider.size
+      )
+    ) {
+      transform.position = resolveCircleVsRectangleCollision(
+        transform.position,
+        collider.size.x,
+        otherTransform.position,
+        otherCollider.size
+      )
+      continue
+    }
+
+    if (
+      collider.type === 'rectangle'
+      && otherCollider.type === 'circle'
+      && isCircleVsRectangleCollision(
+        transform.position,
+        collider.size.x,
+        otherTransform.position,
+        otherCollider.size
+      )
+    ) {
+      otherTransform.position = resolveRectangleVsCircleCollision(
+        otherTransform.position,
+        otherCollider.size,
+        transform.position,
+        collider.size.x
+      )
+      continue
     }
   }
 }
 
 export class CollisionSystem extends AbstractSimpleSystem {
-  update (ecs: IECS, _dt: number, entity: IEntity): void {
-    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
-    const collider = ecs.getComponent<ColliderComponent>(entity, ComponentTypes.Collider)
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    doCollisionLoop(ecs, entity)
+  }
+}
 
-    if (!collider || !transform) {
-      return
-    }
+export function doPlayerInputHandleLoop(ecs: IECS, entity: IEntity) {
+  const playerInput = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
+  const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
+  const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
 
-    if (collider.static) {
-      return
-    }
-
-    for (const otherEntity of ecs.entities) {
-      if (otherEntity === null) {
-        continue
-      }
-
-      if (otherEntity.id === entity.id) {
-        continue
-      }
-
-      const otherTransform = ecs.getComponent<TransformComponent>(otherEntity, ComponentTypes.Transform)
-      const otherCollider = ecs.getComponent<ColliderComponent>(otherEntity, ComponentTypes.Collider)
-
-      if (!otherTransform || !otherCollider) {
-        continue
-      }
-
-      if (otherCollider.priority < collider.priority) {
-        continue
-      }
-
-      if (
-        collider.type === 'circle'
-        && otherCollider.type === 'circle'
-        && isCircleVsCircleCollision(
-          transform.position,
-          otherTransform.position,
-          collider.size.x,
-          otherCollider.size.x
-        )
-      ) {
-        transform.position = resolveCircleVsCircleCollision(
-          transform.position,
-          otherTransform.position,
-          collider.size.x,
-          otherCollider.size.x
-        )
-        continue
-      }
-
-      if (
-        collider.type === 'circle'
-        && otherCollider.type === 'rectangle'
-        && isCircleVsRectangleCollision(
-          transform.position,
-          collider.size.x,
-          otherTransform.position,
-          otherCollider.size
-        )
-      ) {
-        transform.position = resolveCircleVsRectangleCollision(
-          transform.position,
-          collider.size.x,
-          otherTransform.position,
-          otherCollider.size
-        )
-        continue
-      }
-
-      if (
-        collider.type === 'rectangle'
-        && otherCollider.type === 'circle'
-        && isCircleVsRectangleCollision(
-          transform.position,
-          collider.size.x,
-          otherTransform.position,
-          otherCollider.size
-        )
-      ) {
-        otherTransform.position = resolveRectangleVsCircleCollision(
-          otherTransform.position,
-          otherCollider.size,
-          transform.position,
-          collider.size.x
-        )
-        continue
+  if (playerInput && rigidBody && transform) {
+    
+    // if we're in the browser, only handle input if we're the local player
+    if (typeof process !== 'object') {
+      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+      if (!localPlayer || !localPlayer.isLocalPlayer) {
+        return
       }
     }
+
+    rigidBody.acceleration.x = playerInput.moveInput.x * rigidBody.maxAcceleration
+    rigidBody.acceleration.y = playerInput.moveInput.y * rigidBody.maxAcceleration
+    transform.rotation = playerInput.lookRot
   }
 }
 
 export class PlayerInputHandlerSystem extends AbstractSimpleSystem {
-  update (ecs: IECS, _dt: number, entity: IEntity): void {
-    const playerInput = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
-    const rigidBody = ecs.getComponent<RigidBodyComponent>(entity, ComponentTypes.RigidBody)
-    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
-
-    if (playerInput && rigidBody && transform) {
-      rigidBody.acceleration.x = playerInput.moveInput.x * rigidBody.maxAcceleration
-      rigidBody.acceleration.y = playerInput.moveInput.y * rigidBody.maxAcceleration
-      transform.rotation = playerInput.lookRot
-    }
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    doPlayerInputHandleLoop(ecs, entity)
   }
 }
 
@@ -189,6 +226,14 @@ export class BoundsSystem extends AbstractSimpleSystem {
 
   update(ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+
+    // if in browser and not local player, don't apply bounds
+    if (typeof process !== 'object') {
+      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+      if (!localPlayer || !localPlayer.isLocalPlayer) {
+        return
+      }
+    }
 
     if (transform) {
       if (transform.position.x < this.bounds.x) {

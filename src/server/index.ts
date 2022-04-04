@@ -37,7 +37,7 @@ const ecs = new ECS(
   new PlayerInputHandlerSystem(),
   new PhysicsSystem(),
   new CollisionSystem(),
-  new TransformSyncSystem(1/60, serverSocket),
+  new TransformSyncSystem(1/30, serverSocket),
   // TODO: hook up with configurable map size
   new BoundsSystem({x: 0, y: 0, w: 1440, h: 1080})
 );
