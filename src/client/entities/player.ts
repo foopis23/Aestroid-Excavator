@@ -1,7 +1,7 @@
 import { Application, Graphics, Point } from "pixi.js"
-import { ComponentTypes, IEntityData } from "../core/components"
-import { ECS } from "../core/ecs"
-import { EntityType } from "../core/entity"
+import { ComponentTypes, IEntityData } from "../../core/components"
+import { ECS } from "../../core/ecs"
+import { EntityType } from "../../core/entity"
 
 export function createPlayerGraphics(color: number) {
   const playerGraphics = new Graphics()

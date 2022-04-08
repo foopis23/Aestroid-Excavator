@@ -2,13 +2,13 @@ import './style.css'
 
 import { COLOR_SCHEME, BASE_RESOLUTION } from './config'
 
-import { Application, Graphics, Point, settings, Text } from 'pixi.js'
+import { Application, settings } from 'pixi.js'
 import { ECS } from '../core/ecs'
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from '../core/systems'
 
 import { ComponentTypes, GraphicsComponent, TransformSyncComponent } from '../core/components'
 import { ClientPredictionSystem, GraphicsSystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from './systems'
-import { createPlayer } from './player'
+import { createPlayer } from './entities/player'
 import { useAppScaler } from './window'
 import { io } from 'socket.io-client'
 import { EntityPacket, SpawnEntityPacket, SyncTransformPacket } from '../core/net'
