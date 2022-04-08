@@ -89,6 +89,13 @@ export class ECS implements IECS {
     return id
   }
 
+  destroyEntities() {
+    this._entityCount = 0
+    this.entities = []
+    this.entityData = []
+    this.freedEntityIds = []
+  }
+
   hasComponent(entity: IEntity, component: ComponentTypes): boolean {
     return (entity.componentMask & component) === component
   }
