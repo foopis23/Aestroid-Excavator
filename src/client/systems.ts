@@ -4,8 +4,8 @@ import { Application } from "pixi.js";
 import { Vector2 } from "simple-game-math";
 import { IECS } from "../core/ecs";
 import { IEntity } from "../core/entity";
-import { useMousePos } from "./input";
-import { isKeyDown } from "./input";
+import { useMousePos } from "./util/input";
+import { isKeyDown } from "./util/input";
 import { Socket } from "socket.io-client";
 
 export class GraphicsSystem extends AbstractSimpleSystem {
@@ -117,7 +117,7 @@ export class TransformSmoothingSystem extends AbstractSimpleSystem {
     super()
   }
 
-  update(ecs: IECS, dt: number, entity: IEntity): void {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync)
     const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
@@ -170,7 +170,7 @@ export class TransformSmoothingSystem extends AbstractSimpleSystem {
 }
 
 export class ClientPredictionSystem extends AbstractSimpleSystem {
-  update(ecs: IECS, dt: number, entity: IEntity): void {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
     const inputComponent = ecs.getComponent<PlayerInputComponent>(entity, ComponentTypes.PlayerInput)
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync)
