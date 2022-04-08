@@ -1,5 +1,5 @@
 import { Application } from "pixi.js"
-import { BASE_RESOLUTION } from "./config"
+import { BASE_RESOLUTION } from "../config"
 
 export function useAppScaler(app: Application) {
   function resizeApplication() {
