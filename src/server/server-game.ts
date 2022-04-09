@@ -121,7 +121,7 @@ export class ServerGame {
   protected onPlayerInput(socket: Socket, input: IPlayerInputPacket) {
     const playerEntityId = this.socketIdToPlayerEntityId.get(socket.id)
 
-    if (playerEntityId) {
+    if (playerEntityId !== undefined) {
       const playerEntity = this.ecs.entities[playerEntityId]
       if (playerEntity) {
         const playerInput = this.ecs.getComponent<PlayerInputComponent>(playerEntity, ComponentTypes.PlayerInput)
