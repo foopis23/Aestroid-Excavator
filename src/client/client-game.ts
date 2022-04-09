@@ -105,10 +105,10 @@ export class ClientGame {
     this.app.ticker.remove(this.tickerCallback)
     this.app.stage.removeChild(this.scene)
 
-    this.socket.removeListener("spawnEntity")
-    this.socket.removeListener("despawnEntity")
-    this.socket.removeListener("syncTransform")
-    this.socket.removeListener("assignPlayerId")
+    this.socket.removeAllListeners("spawnEntity")
+    this.socket.removeAllListeners("despawnEntity")
+    this.socket.removeAllListeners("syncTransform")
+    this.socket.removeAllListeners("assignPlayerId")
   }
 
   protected update(deltaFrame: number) {
