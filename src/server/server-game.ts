@@ -145,6 +145,7 @@ export class ServerGame {
         if (playerInput) {
           playerInput.moveInput = input.moveInput
           playerInput.lookRot = input.lookRot
+          playerInput.isFire = input.isFire
         }
       }
     }

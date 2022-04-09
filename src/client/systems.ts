@@ -80,7 +80,8 @@ export class PollInputSystem extends AbstractSimpleSystem {
     inputComponent.inputBuffer.push({
       time: Date.now(),
       moveInput,
-      lookRot
+      lookRot,
+      isFire: isKeyDown(' ') || isKeyDown('space')
     })
   }
 }
@@ -107,6 +108,7 @@ export class SyncInputSystem extends AbstractNetworkSyncSystem {
       moveInput: inputComponent.moveInput,
       lookRot: inputComponent.lookRot,
       entityId: entity.id,
+      isFire: inputComponent.isFire,
       time: Date.now()
     })
   }
