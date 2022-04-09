@@ -336,7 +336,6 @@ export class TriggerSystem extends AbstractSimpleSystem {
   }
 
   private handleTrigger(ecs: IECS, entity: IEntity, otherEntity: IEntity) {
-    console.log('trigger', entity.id, otherEntity.id)
     switch (entity.type) {
       case EntityType.Material:
         break;
