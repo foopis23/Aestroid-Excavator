@@ -29,7 +29,8 @@ export function createAsteroid(parent: Container, ecs: ECS, initial: Partial<IEn
       ComponentTypes.RigidBody,
       ComponentTypes.Graphics,
       ComponentTypes.Collider,
-      ComponentTypes.TransformSync
+      ComponentTypes.TransformSync,
+      ComponentTypes.Health
     ]
   )
 }

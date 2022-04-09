@@ -1,4 +1,4 @@
-import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent } from "../core/components";
 import { AbstractNetworkSyncSystem, AbstractSimpleSystem, doCollisionLoop, doPhysicsLoop, doPlayerInputHandleLoop } from "../core/systems";
 import { Application } from "pixi.js";
 import { Vector2 } from "simple-game-math";
@@ -21,6 +21,11 @@ export class GraphicsSystem extends AbstractSimpleSystem {
       graphics.graphics.position.x = transform.position.x
       graphics.graphics.position.y = transform.position.y
       graphics.graphics.rotation = transform.rotation
+
+      const health = ecs.getComponent<HealthComponent>(entity, ComponentTypes.Health)
+      if (health) {
+        graphics.graphics.alpha = health.health / health.maxHealth
+      }
     }
   }
 }

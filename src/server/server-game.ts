@@ -4,7 +4,7 @@ import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IPlayerInputPacket, IServerToClientEvents, ISocketData } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem, TriggerSystem } from "../core/systems";
-import { PlayerLaserSpawnSystem } from "./systems";
+import { HealthSystem, PlayerLaserSpawnSystem, SyncHealthSystem } from "./systems";
 import { TransformSyncSystem } from "./transform-sync";
 
 export class ServerGame {
@@ -26,7 +26,9 @@ export class ServerGame {
       new TriggerSystem(serverSocket),
       new TransformSyncSystem(1 / 30, serverSocket),
       // TODO: hook up with configurable map size
-      new BoundsSystem({ x: 0, y: 0, w: 1440, h: 1080 })
+      new BoundsSystem({ x: 0, y: 0, w: 1440, h: 1080 }),
+      new HealthSystem(serverSocket),
+      new SyncHealthSystem(1/10, serverSocket)
     );
     this.socketIdToPlayerEntityId = new Map<string, number>();
 
@@ -67,7 +69,9 @@ export class ServerGame {
       hasDrag: false,
       velocity: { x: Math.random() * 20 - 10, y: Math.random() * 20 - 10 },
       type: 'circle',
-      priority: radius
+      priority: radius,
+      health: radius,
+      maxHealth: radius
     }
 
     const entity = this.ecs.createNewEntity(
@@ -77,7 +81,8 @@ export class ServerGame {
         ComponentTypes.Transform,
         ComponentTypes.RigidBody,
         ComponentTypes.Collider,
-        ComponentTypes.TransformSync
+        ComponentTypes.TransformSync,
+        ComponentTypes.Health
       ]
     )
 

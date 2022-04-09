@@ -1,9 +1,9 @@
 import { Server } from "socket.io";
-import { ComponentTypes, IEntityData, LaserSpawnerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
+import { ComponentTypes, HealthComponent, IEntityData, LaserSpawnerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
 import { IECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "../core/net";
-import { AbstractSimpleSystem } from "../core/systems";
+import { AbstractNetworkSyncSystem, AbstractSimpleSystem } from "../core/systems";
 
 export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
 
@@ -54,5 +54,49 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
         time: Date.now()
       })
     }
+  }
+}
+
+export class HealthSystem extends AbstractSimpleSystem {
+
+  constructor(protected readonly serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>) {
+    super()
+  }
+
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const health = ecs.getComponent<HealthComponent>(entity, ComponentTypes.Health)
+    if (!health) {
+      return
+    }
+
+    // TODO: if asteroid, spawn new asteroid
+    // TODO: if asteroid, spawn materials
+    // TODO: if player, drop inventory
+    if (health.health <= 0) {
+      ecs.destroyEntity(entity)
+      this.serverSocket.emit('despawnEntity', {
+        entityId: entity.id,
+        time: Date.now()
+      })
+    }
+  }
+}
+
+export class SyncHealthSystem extends AbstractNetworkSyncSystem {
+  constructor(syncRate: number, private serverSocket: Server) {
+    super(syncRate)
+  }
+
+  sync(ecs: IECS, entity: IEntity): void {
+    const health = ecs.getComponent<HealthComponent>(entity, ComponentTypes.Health)
+    if (!health) {
+      return
+    }
+
+    this.serverSocket.emit('syncHealth', {
+      entityId: entity.id,
+      health: health.health,
+      time: Date.now()
+    })
   }
 }
