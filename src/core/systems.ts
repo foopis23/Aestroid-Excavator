@@ -257,6 +257,7 @@ export class BoundsSystem extends AbstractSimpleSystem {
 }
 
 // TOOD: Add support for trigger v trigger collision
+// TODO: Move this to server systems since it doesn't need to be updated on the client
 export class TriggerSystem extends AbstractSimpleSystem {
   constructor(protected readonly serverSocket: Server) {
     super()
@@ -340,7 +341,6 @@ export class TriggerSystem extends AbstractSimpleSystem {
         break;
       case EntityType.Projectile:
         // TODO: do damage to target if has health
-        console.log('projectile hit', otherEntity.id)
         this.serverSocket.emit('despawnEntity', {
           entityId: entity.id,
           time: Date.now()
