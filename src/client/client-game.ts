@@ -58,7 +58,11 @@ export class ClientGame {
         )
         break;
       case EntityType.Asteroid:
-        createAsteroid(this.scene, this.ecs, data.initial ?? {})
+        if (data.otherData?.points === undefined) {
+          throw new Error("Asteroid spawn packet missing points")
+        }
+        
+        createAsteroid(this.scene, this.ecs, data.initial ?? {}, data.otherData?.points)
         break;
       default:
         throw new Error("Unknown Entity Type From Server")
