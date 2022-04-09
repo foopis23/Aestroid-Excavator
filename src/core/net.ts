@@ -21,7 +21,8 @@ export interface IPlayerSyncPacket {
 
 export interface SpawnEntityPacket extends EntityPacket {
   initial?: Partial<IEntityData>
-  type: EntityType
+  type: EntityType,
+  otherData?: any
 }
 
 export interface SyncTransformPacket extends EntityPacket {

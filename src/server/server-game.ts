@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import { ComponentTypes, IEntityData, PlayerInputComponent } from "../core/components";
 import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
-import { IPlayerInputPacket } from "../core/net";
+import { IClientToServerEvents, IInterServerEvents, IPlayerInputPacket, IServerToClientEvents, ISocketData } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
 import { TransformSyncSystem } from "./transform-sync";
 
@@ -13,7 +13,10 @@ export class ServerGame {
 
   private intervalHandle: NodeJS.Timer;
 
-  constructor(protected serverSocket: Server, SERVER_TICK_RATE: number) {
+  constructor(
+    protected serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>,
+    SERVER_TICK_RATE: number
+  ) {
     this.ecs = new ECS(
       new PlayerInputHandlerSystem(),
       new PhysicsSystem(),
@@ -42,6 +45,16 @@ export class ServerGame {
 
   protected spawnAsteroidServerEntity(): IEntity {
     const radius = (Math.random() * 60) + 20
+
+    const points = []
+    const numPoints = Math.random() * 6 + 4
+
+    for (let p = 0; p < numPoints; p++) {
+      const angle = p * Math.PI * 2 / numPoints
+      const distance = (Math.random() * (radius - (radius * 0.5))) + (radius * 0.5)
+      points.push({ x: Math.cos(angle) * distance, y: Math.sin(angle) * distance })
+    }
+
     const initialData: Partial<IEntityData> = {
       // TODO: Configurable Map Size
       position: { x: Math.random() * 1440, y: Math.random() * 1080 },
@@ -69,7 +82,10 @@ export class ServerGame {
       entityId: entity.id,
       type: EntityType.Asteroid,
       time: Date.now(),
-      initial: initialData
+      initial: initialData,
+      otherData: {
+        points: points
+      }
     })
 
     return entity
