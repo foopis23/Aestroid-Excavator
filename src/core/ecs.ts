@@ -70,7 +70,7 @@ export class ECS implements IECS {
   destroyEntity(entity: IEntity) {
     const index = this.entities.indexOf(entity)
     if (index == -1) {
-      throw new Error('Entity not found')
+      return
     }
 
     return this.destroyEntityById(index)

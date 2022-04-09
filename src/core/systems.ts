@@ -233,9 +233,12 @@ export class BoundsSystem extends AbstractSimpleSystem {
 
     // if in browser and not local player, don't apply bounds
     if (typeof process !== 'object') {
-      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
-      if (!localPlayer || !localPlayer.isLocalPlayer) {
-        return
+      const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync);
+      if (transformSync) {
+        const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+        if (!localPlayer || !localPlayer.isLocalPlayer) {
+          return
+        }
       }
     }
 
