@@ -56,6 +56,8 @@ export class ClientEngine {
   }
 
   protected onDisconnect() {
+    this.game?.destroy()
+    this.game = undefined
     this.state = ClientState.DISCONNECTED
     console.log('Disconnected from server')
   }

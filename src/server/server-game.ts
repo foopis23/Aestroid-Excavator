@@ -1,7 +1,8 @@
 import { Server, Socket } from "socket.io";
-import { ComponentTypes, IEntityData } from "../core/components";
+import { ComponentTypes, IEntityData, PlayerInputComponent } from "../core/components";
 import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
+import { IPlayerInputPacket } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
 import { TransformSyncSystem } from "./transform-sync";
 
@@ -9,6 +10,7 @@ export class ServerGame {
   protected ecs: ECS;
   protected socketIdToPlayerEntityId: Map<string, number>;
   protected lastTick: number;
+
   private intervalHandle: NodeJS.Timer;
 
   constructor(protected serverSocket: Server, SERVER_TICK_RATE: number) {
@@ -22,8 +24,11 @@ export class ServerGame {
     );
     this.socketIdToPlayerEntityId = new Map<string, number>();
 
+
+
     for (const socketEntry of this.serverSocket.sockets.sockets) {
       const socket = socketEntry[1]
+      socket.on('playerInput', (input: IPlayerInputPacket) => this.onPlayerInput(socket, input))
       this.spawnServerPlayerEntity(socket)
     }
 
@@ -113,7 +118,28 @@ export class ServerGame {
     this.ecs.update(dt)
   }
 
+  protected onPlayerInput(socket: Socket, input: IPlayerInputPacket) {
+    const playerEntityId = this.socketIdToPlayerEntityId.get(socket.id)
+
+    if (playerEntityId) {
+      const playerEntity = this.ecs.entities[playerEntityId]
+      if (playerEntity) {
+        const playerInput = this.ecs.getComponent<PlayerInputComponent>(playerEntity, ComponentTypes.PlayerInput)
+
+        if (playerInput) {
+          playerInput.moveInput = input.moveInput
+          playerInput.lookRot = input.lookRot
+        }
+      }
+    }
+  }
+
   public destroy() {
     clearInterval(this.intervalHandle)
+
+    const sockets = this.serverSocket.sockets.sockets;
+    for (const socket of sockets.values()) {
+      socket.removeAllListeners('playerInput')
+    }
   }
 }
