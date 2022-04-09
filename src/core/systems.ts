@@ -1,7 +1,7 @@
 import { collisions, kinematics } from "simple-game-physics";
-import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent } from "./components";
+import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
-import { IEntity } from "./entity";
+import { EntityType, IEntity } from "./entity";
 
 const {
   resolveCircleVsRectangleCollision,
@@ -248,6 +248,87 @@ export class BoundsSystem extends AbstractSimpleSystem {
       if (transform.position.y > this.bounds.y + this.bounds.h) {
         transform.position.y = this.bounds.y
       }
+    }
+  }
+}
+
+// TOOD: Add support for trigger v trigger collision
+export class TriggerSystem extends AbstractSimpleSystem {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    const collider = ecs.getComponent<TriggerColliderComponent>(entity, ComponentTypes.TriggerCollider)
+
+    if (transform === undefined || collider === undefined) {
+      return
+    }
+  
+    for (const otherEntity of ecs.entities) {
+      if (otherEntity === null) {
+        continue
+      }
+  
+      if (otherEntity.id === entity.id) {
+        continue
+      }
+  
+      const otherTransform = ecs.getComponent<TransformComponent>(otherEntity, ComponentTypes.Transform)
+      const otherCollider = ecs.getComponent<ColliderComponent>(otherEntity, ComponentTypes.Collider)
+  
+      if (!otherTransform || !otherCollider) {
+        continue
+      }
+
+      if (
+        collider.triggerShape === 'circle'
+        && otherCollider.type === 'circle'
+        && isCircleVsCircleCollision(
+          transform.position,
+          otherTransform.position,
+          collider.triggerSize.x,
+          otherCollider.size.x
+        )
+      ) {
+        this.handleTrigger(ecs, entity, otherEntity)
+        continue
+      }
+  
+      if (
+        collider.triggerShape === 'circle'
+        && otherCollider.type === 'rectangle'
+        && isCircleVsRectangleCollision(
+          transform.position,
+          collider.triggerSize.x,
+          otherTransform.position,
+          otherCollider.size
+        )
+      ) {
+        this.handleTrigger(ecs, entity, otherEntity)
+        continue
+      }
+  
+      if (
+        collider.triggerShape === 'rectangle'
+        && otherCollider.type === 'circle'
+        && isCircleVsRectangleCollision(
+          transform.position,
+          collider.triggerSize.x,
+          otherTransform.position,
+          otherCollider.size
+        )
+      ) {
+        this.handleTrigger(ecs, entity, otherEntity)
+        continue
+      }
+    }
+  }
+
+  private handleTrigger(_ecs: IECS, entity: IEntity, otherEntity: IEntity) {
+    console.log('trigger', entity.id, otherEntity.id)
+    switch(entity.type) {
+      case EntityType.Material:
+        break;
+      case EntityType.Goal:
+        break;
     }
   }
 }

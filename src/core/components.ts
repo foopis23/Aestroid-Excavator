@@ -8,7 +8,8 @@ export enum ComponentTypes {
   PlayerInput = 8,
   LocalPlayer = 16,
   Graphics = 32,
-  TransformSync = 64
+  TransformSync = 64,
+  TriggerCollider = 128,
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -33,6 +34,11 @@ export interface ColliderComponent extends IComponent {
   priority: number;
 }
 
+export interface TriggerColliderComponent extends IComponent {
+  triggerSize: Vector2.IVector2;
+  triggerShape: 'circle' | 'rectangle';
+}
+
 export interface PlayerInputComponent extends IComponent {
   moveInput: Vector2.IVector2;
   lookRot: number;
@@ -52,7 +58,7 @@ export interface TransformSyncComponent extends IComponent {
   localTransformBuffer: {value: TransformComponent, time: number}[];
 }
 
-export interface IEntityData extends TransformComponent, RigidBodyComponent, ColliderComponent, PlayerInputComponent, LocalPlayerComponent, GraphicsComponent, TransformSyncComponent { }
+export interface IEntityData extends TransformComponent, RigidBodyComponent, ColliderComponent, PlayerInputComponent, LocalPlayerComponent, GraphicsComponent, TransformSyncComponent, TriggerColliderComponent { }
 
 export class EntityData implements IEntityData {
   static: boolean
@@ -72,6 +78,8 @@ export class EntityData implements IEntityData {
   transformBuffer: { value: TransformComponent, time: number }[];
   inputBuffer: { moveInput: Vector2.IVector2; lookRot: number; time: number; }[];
   localTransformBuffer: { value: TransformComponent; time: number; }[];
+  triggerSize: Vector2.IVector2;
+  triggerShape: "circle" | "rectangle";
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -91,5 +99,7 @@ export class EntityData implements IEntityData {
     this.transformBuffer = initial.transformBuffer ?? []
     this.inputBuffer = initial.inputBuffer ?? []
     this.localTransformBuffer = initial.localTransformBuffer ?? []
+    this.triggerSize = initial.triggerSize ?? { x: 1, y: 1 }
+    this.triggerShape = initial.triggerShape ?? "circle"
   }
 }
