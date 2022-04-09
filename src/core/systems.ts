@@ -1,6 +1,6 @@
 import { collisions, kinematics } from "simple-game-physics";
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TriggerColliderComponent } from "./components";
+import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
 import { EntityType, IEntity } from "./entity";
 
@@ -68,9 +68,12 @@ export function doPhysicsLoop(ecs: IECS, dt: number, entity: IEntity) {
   if (rigidBody && transform) {
     // if in browser and not local player, don't apply physics
     if (typeof process !== 'object') {
-      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
-      if (!localPlayer || !localPlayer.isLocalPlayer) {
-        return
+      const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync);
+      if (transformSync) {
+        const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+        if (!localPlayer || !localPlayer.isLocalPlayer) {
+          return
+        }
       }
     }
 

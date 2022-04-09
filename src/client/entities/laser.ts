@@ -3,8 +3,6 @@ import { ComponentTypes, IEntityData } from "../../core/components";
 import { ECS } from "../../core/ecs";
 import { EntityType } from "../../core/entity";
 
-// TODO: Lasers need client prediction but difficult because for client prediction you need spawning prediction
-
 export function createLaserGraphics(w: number, h: number) {
   const laserGraphics = new Graphics()
     .beginFill(0xff0000)
@@ -27,8 +25,7 @@ export function createLaserEntity(scene: Container, ecs: ECS, initial: Partial<I
     [
       ComponentTypes.Transform,
       ComponentTypes.RigidBody,
-      ComponentTypes.Graphics,
-      ComponentTypes.TransformSync
+      ComponentTypes.Graphics
     ]
   );
 }

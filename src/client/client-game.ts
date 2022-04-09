@@ -62,7 +62,7 @@ export class ClientGame {
         if (data.otherData?.points === undefined) {
           throw new Error("Asteroid spawn packet missing points")
         }
-        
+
         createAsteroid(this.scene, this.ecs, data.initial ?? {}, data.otherData?.points)
         break;
       case EntityType.Projectile:
@@ -76,14 +76,12 @@ export class ClientGame {
   public despawnEntity(data: EntityPacket) {
     const entity = this.ecs.entities[data.entityId]
     if (entity) {
-      setTimeout(() => {
       // TODO: Maybe find a better way to integrate graphics into this system
       const graphics = this.ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
       if (graphics && graphics.graphics) {
         this.scene.removeChild(graphics.graphics)
       }
       this.ecs.destroyEntityById(data.entityId)
-      }, 200 - (Date.now() - data.time))
     }
   }
 
