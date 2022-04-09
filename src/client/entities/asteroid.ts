@@ -1,10 +1,10 @@
-import { Application, Graphics, Point } from "pixi.js";
+import { Container, Graphics, Point } from "pixi.js";
 import { ComponentTypes, IEntityData } from "../../core/components";
 import { ECS } from "../../core/ecs";
 import { EntityType } from "../../core/entity";
 import { COLOR_SCHEME } from "../config";
 
-export function createAsteroid(app: Application, ecs: ECS, initial: Partial<IEntityData> = {}) {
+export function createAsteroid(parent: Container, ecs: ECS, initial: Partial<IEntityData> = {}) {
   if (initial.size === undefined) {
     throw new Error("Asteroid size must be defined");
   }
@@ -30,7 +30,7 @@ export function createAsteroid(app: Application, ecs: ECS, initial: Partial<IEnt
   asteroidGraphics.pivot.x = 0.5
   asteroidGraphics.pivot.y = 0.5
 
-  app.stage.addChild(asteroidGraphics)
+  parent.addChild(asteroidGraphics)
 
   ecs.createNewEntity(
     EntityType.Asteroid,

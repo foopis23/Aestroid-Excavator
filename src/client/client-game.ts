@@ -1,4 +1,4 @@
-import { Application, settings, TickerCallback } from "pixi.js";
+import { Application, Container, settings, TickerCallback } from "pixi.js";
 import { Socket } from "socket.io-client";
 import { ComponentTypes, GraphicsComponent, TransformSyncComponent } from "../core/components";
 import { ECS } from "../core/ecs";
@@ -14,8 +14,8 @@ export class ClientGame {
   protected readonly ecs: ECS;
   protected readonly targetFPMS: number;
   protected readonly tickerCallback: TickerCallback<number>;
-
   protected localPlayerId: number | undefined;
+  protected readonly scene: Container;
 
   constructor(protected readonly socket: Socket, protected readonly app: Application) {
     this.ecs = new ECS(
@@ -33,6 +33,9 @@ export class ClientGame {
     this.tickerCallback = (deltaFrame: number) => this.update(deltaFrame);
     this.targetFPMS = settings.TARGET_FPMS ?? 0.06
 
+    this.scene = new Container();
+    this.app.stage.addChild(this.scene);
+
     this.socket.on("spawnEntity", (data: SpawnEntityPacket) => this.spawnEntity(data))
     this.socket.on("despawnEntity", (data: EntityPacket) => this.despawnEntity(data))
     this.socket.on("syncTransform", (data: SyncTransformPacket) => this.syncTransform(data))
@@ -47,7 +50,7 @@ export class ClientGame {
     switch (data.type) {
       case EntityType.Player:
         createPlayer(
-          this.app,
+          this.scene,
           this.ecs,
           this.localPlayerId == data.entityId,
           data.initial ?? {},
@@ -55,7 +58,7 @@ export class ClientGame {
         )
         break;
       case EntityType.Asteroid:
-        createAsteroid(this.app, this.ecs, data.initial ?? {})
+        createAsteroid(this.scene, this.ecs, data.initial ?? {})
         break;
       default:
         throw new Error("Unknown Entity Type From Server")
@@ -68,7 +71,7 @@ export class ClientGame {
       // TODO: Maybe find a better way to integrate graphics into this system
       const graphics = this.ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
       if (graphics && graphics.graphics) {
-        this.app.stage.removeChild(graphics.graphics)
+        this.scene.removeChild(graphics.graphics)
       }
       this.ecs.destroyEntityById(data.entityId)
     }
@@ -100,6 +103,8 @@ export class ClientGame {
 
   public destroy() {
     this.app.ticker.remove(this.tickerCallback)
+    this.app.stage.removeChild(this.scene)
+
     this.socket.removeListener("spawnEntity")
     this.socket.removeListener("despawnEntity")
     this.socket.removeListener("syncTransform")

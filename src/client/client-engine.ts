@@ -71,11 +71,14 @@ export class ClientEngine {
   }
 
   protected onStartGame() {
+    this.game?.start()
     this.state = ClientState.GAME
     console.log('Starting game')
   }
 
   protected onEndGame() {
+    this.game?.destroy()
+    this.game = undefined
     this.state = ClientState.LOBBY
     console.log('Ending game')
   }
