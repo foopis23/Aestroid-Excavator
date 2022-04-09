@@ -1,7 +1,8 @@
 import { collisions, kinematics } from "simple-game-physics";
-import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent } from "./components";
+import { Server } from "socket.io";
+import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
-import { IEntity } from "./entity";
+import { EntityType, IEntity } from "./entity";
 
 const {
   resolveCircleVsRectangleCollision,
@@ -67,9 +68,12 @@ export function doPhysicsLoop(ecs: IECS, dt: number, entity: IEntity) {
   if (rigidBody && transform) {
     // if in browser and not local player, don't apply physics
     if (typeof process !== 'object') {
-      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
-      if (!localPlayer || !localPlayer.isLocalPlayer) {
-        return
+      const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync);
+      if (transformSync) {
+        const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+        if (!localPlayer || !localPlayer.isLocalPlayer) {
+          return
+        }
       }
     }
 
@@ -198,7 +202,7 @@ export function doPlayerInputHandleLoop(ecs: IECS, entity: IEntity) {
   const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
 
   if (playerInput && rigidBody && transform) {
-    
+
     // if we're in the browser, only handle input if we're the local player
     if (typeof process !== 'object') {
       const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
@@ -248,6 +252,101 @@ export class BoundsSystem extends AbstractSimpleSystem {
       if (transform.position.y > this.bounds.y + this.bounds.h) {
         transform.position.y = this.bounds.y
       }
+    }
+  }
+}
+
+// TODO: Add support for trigger v trigger collision
+// TODO: Move this to server systems since it doesn't need to be updated on the client
+export class TriggerSystem extends AbstractSimpleSystem {
+  constructor(protected readonly serverSocket: Server) {
+    super()
+  }
+
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    const collider = ecs.getComponent<TriggerColliderComponent>(entity, ComponentTypes.TriggerCollider)
+
+    if (transform === undefined || collider === undefined) {
+      return
+    }
+
+    for (const otherEntity of ecs.entities) {
+      if (otherEntity === null) {
+        continue
+      }
+
+      if (otherEntity.id === entity.id) {
+        continue
+      }
+
+      const otherTransform = ecs.getComponent<TransformComponent>(otherEntity, ComponentTypes.Transform)
+      const otherCollider = ecs.getComponent<ColliderComponent>(otherEntity, ComponentTypes.Collider)
+
+      if (!otherTransform || !otherCollider) {
+        continue
+      }
+
+      if (
+        collider.triggerShape === 'circle'
+        && otherCollider.type === 'circle'
+        && isCircleVsCircleCollision(
+          transform.position,
+          otherTransform.position,
+          collider.triggerSize.x,
+          otherCollider.size.x
+        )
+      ) {
+        this.handleTrigger(ecs, entity, otherEntity)
+        continue
+      }
+
+      if (
+        collider.triggerShape === 'circle'
+        && otherCollider.type === 'rectangle'
+        && isCircleVsRectangleCollision(
+          transform.position,
+          collider.triggerSize.x,
+          otherTransform.position,
+          otherCollider.size
+        )
+      ) {
+        this.handleTrigger(ecs, entity, otherEntity)
+        continue
+      }
+
+      // todo: this hack doesn't work here
+      if (
+        collider.triggerShape === 'rectangle'
+        && otherCollider.type === 'circle'
+        && isCircleVsRectangleCollision(
+          otherTransform.position,
+          otherCollider.size.x,
+          transform.position,
+          collider.triggerSize
+        )
+      ) {
+        this.handleTrigger(ecs, entity, otherEntity)
+        continue
+      }
+    }
+  }
+
+  private handleTrigger(ecs: IECS, entity: IEntity, otherEntity: IEntity) {
+    console.log('trigger', entity.id, otherEntity.id)
+    switch (entity.type) {
+      case EntityType.Material:
+        break;
+      case EntityType.Goal:
+        break;
+      case EntityType.Projectile:
+        // TODO: do damage to target if has health
+        this.serverSocket.emit('despawnEntity', {
+          entityId: entity.id,
+          time: Date.now()
+        })
+        ecs.destroyEntity(entity)
+        break;
     }
   }
 }

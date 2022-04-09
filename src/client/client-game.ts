@@ -7,6 +7,7 @@ import { EntityPacket, SpawnEntityPacket, SyncTransformPacket } from "../core/ne
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
 import { BASE_RESOLUTION, COLOR_SCHEME } from "./config";
 import { createAsteroid } from "./entities/asteroid";
+import { createLaserEntity } from "./entities/laser";
 import { createPlayer } from "./entities/player";
 import { ClientPredictionSystem, GraphicsSystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
 
@@ -61,8 +62,11 @@ export class ClientGame {
         if (data.otherData?.points === undefined) {
           throw new Error("Asteroid spawn packet missing points")
         }
-        
+
         createAsteroid(this.scene, this.ecs, data.initial ?? {}, data.otherData?.points)
+        break;
+      case EntityType.Projectile:
+        createLaserEntity(this.scene, this.ecs, data.initial ?? {});
         break;
       default:
         throw new Error("Unknown Entity Type From Server")

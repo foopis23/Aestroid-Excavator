@@ -74,13 +74,17 @@ export class PollInputSystem extends AbstractSimpleSystem {
       mousePos.x - transform.position.x
     )
 
+    const isFire = isKeyDown(' ') || isKeyDown('space')
+
     inputComponent.moveInput = moveInput
     inputComponent.lookRot = lookRot
+    inputComponent.isFire = isFire
 
     inputComponent.inputBuffer.push({
       time: Date.now(),
       moveInput,
-      lookRot
+      lookRot,
+      isFire
     })
   }
 }
@@ -107,6 +111,7 @@ export class SyncInputSystem extends AbstractNetworkSyncSystem {
       moveInput: inputComponent.moveInput,
       lookRot: inputComponent.lookRot,
       entityId: entity.id,
+      isFire: inputComponent.isFire,
       time: Date.now()
     })
   }

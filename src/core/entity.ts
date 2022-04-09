@@ -3,6 +3,7 @@ export enum EntityType {
   Asteroid = 2,
   Material = 3,
   Goal = 4,
+  Projectile = 5,
 }
 
 export interface IEntity {
