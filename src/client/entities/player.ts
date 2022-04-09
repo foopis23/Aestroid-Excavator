@@ -1,7 +1,7 @@
-import { Application, Graphics, Point } from "pixi.js"
-import { ComponentTypes, IEntityData } from "../core/components"
-import { ECS } from "../core/ecs"
-import { EntityType } from "../core/entity"
+import { Container, Graphics, Point } from "pixi.js"
+import { ComponentTypes, IEntityData } from "../../core/components"
+import { ECS } from "../../core/ecs"
+import { EntityType } from "../../core/entity"
 
 export function createPlayerGraphics(color: number) {
   const playerGraphics = new Graphics()
@@ -14,9 +14,9 @@ export function createPlayerGraphics(color: number) {
   return playerGraphics
 }
 
-export function createPlayer(app: Application, ecs: ECS, isLocal: boolean, initial: Partial<IEntityData>, color: number) {
+export function createPlayer(parent: Container, ecs: ECS, isLocal: boolean, initial: Partial<IEntityData>, color: number) {
   const playerGraphics = createPlayerGraphics(color)
-  app.stage.addChild(playerGraphics)
+  parent.addChild(playerGraphics)
 
   const initialPlayerData: Partial<IEntityData> = {
     ...initial,

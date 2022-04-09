@@ -30,9 +30,14 @@ export interface SyncTransformPacket extends EntityPacket {
 }
 
 export interface IServerToClientEvents {
-  start: () => void,
-  waiting: () => void,
-  full: () => void,
+  // GAME STATES
+  WAITING_FOR_PLAYERS: (lookingFor: number) => void,
+  INITIALIZE_GAME: () => void,
+  START_GAME: () => void,
+  END_GAME: () => void,
+  FULL_SERVER: () => void,
+
+  // ENTITY EVENTS
   assignPlayerId: (playerId: number) => void,
   spawnEntity: (data: SpawnEntityPacket) => void,
   despawnEntity: (data: EntityPacket) => void,
