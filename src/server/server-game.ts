@@ -3,7 +3,7 @@ import { ComponentTypes, IEntityData, PlayerInputComponent } from "../core/compo
 import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IPlayerInputPacket, IServerToClientEvents, ISocketData } from "../core/net";
-import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
+import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem, TriggerSystem } from "../core/systems";
 import { PlayerLaserSpawnSystem } from "./systems";
 import { TransformSyncSystem } from "./transform-sync";
 
@@ -23,6 +23,7 @@ export class ServerGame {
       new PlayerLaserSpawnSystem(serverSocket),
       new PhysicsSystem(),
       new CollisionSystem(),
+      new TriggerSystem(serverSocket),
       new TransformSyncSystem(1 / 30, serverSocket),
       // TODO: hook up with configurable map size
       new BoundsSystem({ x: 0, y: 0, w: 1440, h: 1080 })

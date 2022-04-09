@@ -24,12 +24,12 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
       laserSpawn.lastFireTime = Date.now()
       const initial: Partial<IEntityData> = {
         position: {
-          x: transform.position.x + Math.cos(transform.rotation) * 15,
-          y: transform.position.y + Math.sin(transform.rotation) * 15,
+          x: transform.position.x + Math.cos(transform.rotation) * (11 + 30),
+          y: transform.position.y + Math.sin(transform.rotation) * (11 + 30),
         },
         rotation: transform.rotation + Math.PI / 2,
-        triggerShape: 'rectangle',
-        triggerSize: {x: 3, y: 30},
+        triggerShape: 'circle',
+        triggerSize: {x: 5, y: 30},
         velocity: {
           x: Math.cos(transform.rotation) * 1000,
           y: Math.sin(transform.rotation) * 1000,

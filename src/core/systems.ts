@@ -1,4 +1,5 @@
 import { collisions, kinematics } from "simple-game-physics";
+import { Server } from "socket.io";
 import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
 import { EntityType, IEntity } from "./entity";
@@ -198,7 +199,7 @@ export function doPlayerInputHandleLoop(ecs: IECS, entity: IEntity) {
   const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
 
   if (playerInput && rigidBody && transform) {
-    
+
     // if we're in the browser, only handle input if we're the local player
     if (typeof process !== 'object') {
       const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
@@ -254,6 +255,10 @@ export class BoundsSystem extends AbstractSimpleSystem {
 
 // TOOD: Add support for trigger v trigger collision
 export class TriggerSystem extends AbstractSimpleSystem {
+  constructor(protected readonly serverSocket: Server) {
+    super()
+  }
+
   update(ecs: IECS, _dt: number, entity: IEntity): void {
     const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
     const collider = ecs.getComponent<TriggerColliderComponent>(entity, ComponentTypes.TriggerCollider)
@@ -261,19 +266,19 @@ export class TriggerSystem extends AbstractSimpleSystem {
     if (transform === undefined || collider === undefined) {
       return
     }
-  
+
     for (const otherEntity of ecs.entities) {
       if (otherEntity === null) {
         continue
       }
-  
+
       if (otherEntity.id === entity.id) {
         continue
       }
-  
+
       const otherTransform = ecs.getComponent<TransformComponent>(otherEntity, ComponentTypes.Transform)
       const otherCollider = ecs.getComponent<ColliderComponent>(otherEntity, ComponentTypes.Collider)
-  
+
       if (!otherTransform || !otherCollider) {
         continue
       }
@@ -291,7 +296,7 @@ export class TriggerSystem extends AbstractSimpleSystem {
         this.handleTrigger(ecs, entity, otherEntity)
         continue
       }
-  
+
       if (
         collider.triggerShape === 'circle'
         && otherCollider.type === 'rectangle'
@@ -305,15 +310,16 @@ export class TriggerSystem extends AbstractSimpleSystem {
         this.handleTrigger(ecs, entity, otherEntity)
         continue
       }
-  
+
+      // todo: this hack doesn't work here
       if (
         collider.triggerShape === 'rectangle'
         && otherCollider.type === 'circle'
         && isCircleVsRectangleCollision(
-          transform.position,
-          collider.triggerSize.x,
           otherTransform.position,
-          otherCollider.size
+          otherCollider.size.x,
+          transform.position,
+          collider.triggerSize
         )
       ) {
         this.handleTrigger(ecs, entity, otherEntity)
@@ -322,12 +328,21 @@ export class TriggerSystem extends AbstractSimpleSystem {
     }
   }
 
-  private handleTrigger(_ecs: IECS, entity: IEntity, otherEntity: IEntity) {
+  private handleTrigger(ecs: IECS, entity: IEntity, otherEntity: IEntity) {
     console.log('trigger', entity.id, otherEntity.id)
-    switch(entity.type) {
+    switch (entity.type) {
       case EntityType.Material:
         break;
       case EntityType.Goal:
+        break;
+      case EntityType.Projectile:
+        // TODO: do damage to target if has health
+        console.log('projectile hit', otherEntity.id)
+        this.serverSocket.emit('despawnEntity', {
+          entityId: entity.id,
+          time: Date.now()
+        })
+        ecs.destroyEntity(entity)
         break;
     }
   }
