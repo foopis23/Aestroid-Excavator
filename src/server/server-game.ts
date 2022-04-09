@@ -4,6 +4,7 @@ import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IPlayerInputPacket, IServerToClientEvents, ISocketData } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
+import { PlayerLaserSpawnSystem } from "./systems";
 import { TransformSyncSystem } from "./transform-sync";
 
 export class ServerGame {
@@ -19,6 +20,7 @@ export class ServerGame {
   ) {
     this.ecs = new ECS(
       new PlayerInputHandlerSystem(),
+      new PlayerLaserSpawnSystem(serverSocket),
       new PhysicsSystem(),
       new CollisionSystem(),
       new TransformSyncSystem(1 / 30, serverSocket),
@@ -98,7 +100,9 @@ export class ServerGame {
       maxAcceleration: 1000,
       size: { x: 20, y: 20 },
       position: { x: Math.random() * 1340 + 100, y: Math.random() * 980 + 100 },
-      priority: 20
+      priority: 20,
+      fireRate: 500,
+      lastFireTime: 0
     }
 
     const player = this.ecs.createNewEntity(
@@ -108,7 +112,8 @@ export class ServerGame {
         ComponentTypes.Transform,
         ComponentTypes.PlayerInput,
         ComponentTypes.Collider,
-        ComponentTypes.RigidBody
+        ComponentTypes.RigidBody,
+        ComponentTypes.LaserSpawn
       ]
     );
 

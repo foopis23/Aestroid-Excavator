@@ -10,6 +10,7 @@ export enum ComponentTypes {
   Graphics = 32,
   TransformSync = 64,
   TriggerCollider = 128,
+  LaserSpawn = 256,
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -46,6 +47,11 @@ export interface PlayerInputComponent extends IComponent {
   inputBuffer: {moveInput: Vector2.IVector2, lookRot: number, isFire: boolean, time: number}[];
 }
 
+export interface LaserSpawnerComponent extends IComponent {
+  fireRate: number;
+  lastFireTime: number;
+}
+
 export interface LocalPlayerComponent extends IComponent {
   isLocalPlayer: boolean;
 }
@@ -59,7 +65,17 @@ export interface TransformSyncComponent extends IComponent {
   localTransformBuffer: {value: TransformComponent, time: number}[];
 }
 
-export interface IEntityData extends TransformComponent, RigidBodyComponent, ColliderComponent, PlayerInputComponent, LocalPlayerComponent, GraphicsComponent, TransformSyncComponent, TriggerColliderComponent { }
+export interface IEntityData extends 
+TransformComponent,
+RigidBodyComponent,
+ColliderComponent,
+PlayerInputComponent,
+LocalPlayerComponent,
+GraphicsComponent,
+TransformSyncComponent,
+TriggerColliderComponent,
+LaserSpawnerComponent
+{ }
 
 export class EntityData implements IEntityData {
   static: boolean
@@ -82,6 +98,8 @@ export class EntityData implements IEntityData {
   triggerSize: Vector2.IVector2;
   triggerShape: "circle" | "rectangle";
   isFire: boolean;
+  fireRate: number;
+  lastFireTime: number;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -104,5 +122,7 @@ export class EntityData implements IEntityData {
     this.triggerSize = initial.triggerSize ?? { x: 1, y: 1 }
     this.triggerShape = initial.triggerShape ?? "circle"
     this.isFire = initial.isFire ?? false
+    this.fireRate = initial.fireRate ?? 0
+    this.lastFireTime = initial.lastFireTime ?? 0
   }
 }

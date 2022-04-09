@@ -74,14 +74,17 @@ export class PollInputSystem extends AbstractSimpleSystem {
       mousePos.x - transform.position.x
     )
 
+    const isFire = isKeyDown(' ') || isKeyDown('space')
+
     inputComponent.moveInput = moveInput
     inputComponent.lookRot = lookRot
+    inputComponent.isFire = isFire
 
     inputComponent.inputBuffer.push({
       time: Date.now(),
       moveInput,
       lookRot,
-      isFire: isKeyDown(' ') || isKeyDown('space')
+      isFire
     })
   }
 }
