@@ -11,6 +11,7 @@ export enum ComponentTypes {
   TransformSync = 64,
   TriggerCollider = 128,
   LaserSpawn = 256,
+  Health = 512,
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -65,6 +66,11 @@ export interface TransformSyncComponent extends IComponent {
   localTransformBuffer: {value: TransformComponent, time: number}[];
 }
 
+export interface HealthComponent extends IComponent {
+  health: number;
+  maxHealth: number;
+}
+
 export interface IEntityData extends 
 TransformComponent,
 RigidBodyComponent,
@@ -74,7 +80,8 @@ LocalPlayerComponent,
 GraphicsComponent,
 TransformSyncComponent,
 TriggerColliderComponent,
-LaserSpawnerComponent
+LaserSpawnerComponent,
+HealthComponent
 { }
 
 export class EntityData implements IEntityData {
@@ -100,6 +107,8 @@ export class EntityData implements IEntityData {
   isFire: boolean;
   fireRate: number;
   lastFireTime: number;
+  health: number;
+  maxHealth: number;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -124,5 +133,7 @@ export class EntityData implements IEntityData {
     this.isFire = initial.isFire ?? false
     this.fireRate = initial.fireRate ?? 0
     this.lastFireTime = initial.lastFireTime ?? 0
+    this.health = initial.health ?? 100
+    this.maxHealth = initial.maxHealth ?? 100
   }
 }

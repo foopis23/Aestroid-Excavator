@@ -1,9 +1,9 @@
 import { Application, Container, settings, TickerCallback } from "pixi.js";
 import { Socket } from "socket.io-client";
-import { ComponentTypes, GraphicsComponent, TransformSyncComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, HealthComponent, TransformSyncComponent } from "../core/components";
 import { ECS } from "../core/ecs";
 import { EntityType } from "../core/entity";
-import { EntityPacket, SpawnEntityPacket, SyncTransformPacket } from "../core/net";
+import { EntityPacket, SpawnEntityPacket, SyncHealthPacket, SyncTransformPacket } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
 import { BASE_RESOLUTION, COLOR_SCHEME } from "./config";
 import { createAsteroid } from "./entities/asteroid";
@@ -41,6 +41,7 @@ export class ClientGame {
     this.socket.on("despawnEntity", (data: EntityPacket) => this.despawnEntity(data))
     this.socket.on("syncTransform", (data: SyncTransformPacket) => this.syncTransform(data))
     this.socket.on("assignPlayerId", (data: number) => this.assignPlayerId(data))
+    this.socket.on("syncHealth", (data: SyncHealthPacket) => this.syncHealth(data))
   }
 
   public spawnEntity(data: SpawnEntityPacket) {
@@ -105,6 +106,16 @@ export class ClientGame {
     }
   }
 
+  public syncHealth(data: SyncHealthPacket) {
+    const entity = this.ecs.entities[data.entityId]
+    if (entity) {
+      const health = this.ecs.getComponent<HealthComponent>(entity, ComponentTypes.Health)
+      if (health) {
+        health.health = data.health
+      }
+    }
+  }
+
   public start() {
     this.app.ticker.add(this.tickerCallback)
   }
@@ -117,6 +128,7 @@ export class ClientGame {
     this.socket.removeAllListeners("despawnEntity")
     this.socket.removeAllListeners("syncTransform")
     this.socket.removeAllListeners("assignPlayerId")
+    this.socket.removeAllListeners("syncHealth")
   }
 
   protected update(deltaFrame: number) {

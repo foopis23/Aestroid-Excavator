@@ -1,6 +1,6 @@
 import { collisions, kinematics } from "simple-game-physics";
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
+import { ColliderComponent, ComponentTypes, HealthComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
 import { EntityType, IEntity } from "./entity";
 
@@ -233,9 +233,12 @@ export class BoundsSystem extends AbstractSimpleSystem {
 
     // if in browser and not local player, don't apply bounds
     if (typeof process !== 'object') {
-      const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
-      if (!localPlayer || !localPlayer.isLocalPlayer) {
-        return
+      const transformSync = ecs.getComponent<TransformSyncComponent>(entity, ComponentTypes.TransformSync);
+      if (transformSync) {
+        const localPlayer = ecs.getComponent<LocalPlayerComponent>(entity, ComponentTypes.LocalPlayer)
+        if (!localPlayer || !localPlayer.isLocalPlayer) {
+          return
+        }
       }
     }
 
@@ -333,19 +336,23 @@ export class TriggerSystem extends AbstractSimpleSystem {
   }
 
   private handleTrigger(ecs: IECS, entity: IEntity, otherEntity: IEntity) {
-    console.log('trigger', entity.id, otherEntity.id)
     switch (entity.type) {
       case EntityType.Material:
         break;
       case EntityType.Goal:
         break;
       case EntityType.Projectile:
-        // TODO: do damage to target if has health
-        this.serverSocket.emit('despawnEntity', {
-          entityId: entity.id,
-          time: Date.now()
-        })
-        ecs.destroyEntity(entity)
+        {
+          const health = ecs.getComponent<HealthComponent>(otherEntity, ComponentTypes.Health)
+          if (health) {
+            health.health -= 10
+          }
+          this.serverSocket.emit('despawnEntity', {
+            entityId: entity.id,
+            time: Date.now()
+          })
+          ecs.destroyEntity(entity)
+        }
         break;
     }
   }
