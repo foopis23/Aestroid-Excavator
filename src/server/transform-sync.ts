@@ -4,6 +4,7 @@ import { IECS } from "../core/ecs";
 import { IEntity } from "../core/entity";
 import { AbstractNetworkSyncSystem } from "../core/systems";
 
+// TODO: Move To Systems File
 export class TransformSyncSystem extends AbstractNetworkSyncSystem {
   constructor(syncRate: number, private serverSocket: Server) {
     super(syncRate)

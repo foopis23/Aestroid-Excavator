@@ -34,6 +34,10 @@ export interface SyncHealthPacket extends EntityPacket {
   health: number
 }
 
+export interface SyncInventoryPacket extends EntityPacket {
+  materialCount: number
+}
+
 export interface IServerToClientEvents {
   // GAME STATES
   WAITING_FOR_PLAYERS: (lookingFor: number) => void,
@@ -48,6 +52,7 @@ export interface IServerToClientEvents {
   despawnEntity: (data: EntityPacket) => void,
   syncTransform: (data: SyncTransformPacket) => void,
   syncHealth: (data: SyncHealthPacket) => void
+  syncInventory: (data: SyncInventoryPacket) => void,
 }
 
 export interface IClientToServerEvents {

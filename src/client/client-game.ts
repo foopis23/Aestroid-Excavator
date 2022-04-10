@@ -1,15 +1,16 @@
 import { Application, Container, settings, TickerCallback } from "pixi.js";
 import { Socket } from "socket.io-client";
-import { ComponentTypes, GraphicsComponent, HealthComponent, TransformSyncComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, HealthComponent, InventoryComponent, TransformSyncComponent } from "../core/components";
 import { ECS } from "../core/ecs";
 import { EntityType } from "../core/entity";
-import { EntityPacket, SpawnEntityPacket, SyncHealthPacket, SyncTransformPacket } from "../core/net";
+import { EntityPacket, SpawnEntityPacket, SyncHealthPacket, SyncInventoryPacket, SyncTransformPacket } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem } from "../core/systems";
 import { BASE_RESOLUTION, COLOR_SCHEME } from "./config";
 import { createAsteroid } from "./entities/asteroid";
 import { createLaserEntity } from "./entities/laser";
+import { createMaterialEntity } from "./entities/material";
 import { createPlayer } from "./entities/player";
-import { ClientPredictionSystem, GraphicsSystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
+import { ClientPredictionSystem, GraphicsSystem, InventoryDisplaySystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
 
 export class ClientGame {
   protected readonly ecs: ECS;
@@ -28,13 +29,14 @@ export class ClientGame {
       new BoundsSystem({ x: 0, y: 0, w: BASE_RESOLUTION.x, h: BASE_RESOLUTION.y }),
       new TransformSmoothingSystem(200),
       new ClientPredictionSystem(),
-      new GraphicsSystem()
+      new GraphicsSystem(),
+      new InventoryDisplaySystem()
     )
 
     this.tickerCallback = (deltaFrame: number) => this.update(deltaFrame);
     this.targetFPMS = settings.TARGET_FPMS ?? 0.06
 
-    this.scene = new Container();
+  this.scene = new Container();
     this.app.stage.addChild(this.scene);
 
     this.socket.on("spawnEntity", (data: SpawnEntityPacket) => this.spawnEntity(data))
@@ -42,6 +44,7 @@ export class ClientGame {
     this.socket.on("syncTransform", (data: SyncTransformPacket) => this.syncTransform(data))
     this.socket.on("assignPlayerId", (data: number) => this.assignPlayerId(data))
     this.socket.on("syncHealth", (data: SyncHealthPacket) => this.syncHealth(data))
+    this.socket.on("syncInventory", (data: SyncInventoryPacket) => this.syncInventory(data))
   }
 
   public spawnEntity(data: SpawnEntityPacket) {
@@ -68,6 +71,9 @@ export class ClientGame {
         break;
       case EntityType.Projectile:
         createLaserEntity(this.scene, this.ecs, data.initial ?? {});
+        break;
+      case EntityType.Material:
+        createMaterialEntity(this.scene, this.ecs, data.initial ?? {});
         break;
       default:
         throw new Error("Unknown Entity Type From Server")
@@ -112,6 +118,16 @@ export class ClientGame {
       const health = this.ecs.getComponent<HealthComponent>(entity, ComponentTypes.Health)
       if (health) {
         health.health = data.health
+      }
+    }
+  }
+
+  public syncInventory(data: SyncInventoryPacket) {
+    const entity = this.ecs.entities[data.entityId]
+    if (entity) {
+      const inventory = this.ecs.getComponent<InventoryComponent>(entity, ComponentTypes.Inventory)
+      if (inventory) {
+        inventory.materialCount = data.materialCount
       }
     }
   }

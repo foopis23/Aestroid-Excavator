@@ -4,7 +4,7 @@ import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IPlayerInputPacket, IServerToClientEvents, ISocketData } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem, TriggerSystem } from "../core/systems";
-import { HealthSystem, PlayerLaserSpawnSystem, SyncHealthSystem } from "./systems";
+import { HealthSystem, PlayerLaserSpawnSystem, SyncHealthSystem, SyncInventorySystem } from "./systems";
 import { TransformSyncSystem } from "./transform-sync";
 
 export class ServerGame {
@@ -28,7 +28,10 @@ export class ServerGame {
       // TODO: hook up with configurable map size
       new BoundsSystem({ x: 0, y: 0, w: 1440, h: 1080 }),
       new HealthSystem(serverSocket),
-      new SyncHealthSystem(1/10, serverSocket)
+
+      // less important sync systems run last and at a slower sync rate
+      new SyncHealthSystem(1/5, serverSocket),
+      new SyncInventorySystem(1/5, serverSocket)
     );
     this.socketIdToPlayerEntityId = new Map<string, number>();
 
@@ -119,7 +122,8 @@ export class ServerGame {
         ComponentTypes.PlayerInput,
         ComponentTypes.Collider,
         ComponentTypes.RigidBody,
-        ComponentTypes.LaserSpawn
+        ComponentTypes.LaserSpawn,
+        ComponentTypes.Inventory
       ]
     );
 

@@ -1,8 +1,9 @@
 import { collisions, kinematics } from "simple-game-physics";
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, HealthComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
+import { ColliderComponent, ComponentTypes, HealthComponent, InventoryComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
 import { EntityType, IEntity } from "./entity";
+import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "./net";
 
 const {
   resolveCircleVsRectangleCollision,
@@ -262,7 +263,7 @@ export class BoundsSystem extends AbstractSimpleSystem {
 // TODO: Add support for trigger v trigger collision
 // TODO: Move this to server systems since it doesn't need to be updated on the client
 export class TriggerSystem extends AbstractSimpleSystem {
-  constructor(protected readonly serverSocket: Server) {
+  constructor(protected readonly serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>) {
     super()
   }
 
@@ -338,6 +339,15 @@ export class TriggerSystem extends AbstractSimpleSystem {
   private handleTrigger(ecs: IECS, entity: IEntity, otherEntity: IEntity) {
     switch (entity.type) {
       case EntityType.Material:
+        {
+          const otherInventory = ecs.getComponent<InventoryComponent>(otherEntity, ComponentTypes.Inventory)
+          if (otherInventory) {
+            otherInventory.materialCount++;
+            this.serverSocket.emit('despawnEntity', { entityId: entity.id, time: Date.now() })
+            ecs.destroyEntity(entity)
+          }
+        }
+
         break;
       case EntityType.Goal:
         break;

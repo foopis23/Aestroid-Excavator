@@ -1,6 +1,6 @@
-import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent, InventoryComponent } from "../core/components";
 import { AbstractNetworkSyncSystem, AbstractSimpleSystem, doCollisionLoop, doPhysicsLoop, doPlayerInputHandleLoop } from "../core/systems";
-import { Application } from "pixi.js";
+import { Application, Container, Text } from "pixi.js";
 import { Vector2 } from "simple-game-math";
 import { IECS } from "../core/ecs";
 import { IEntity } from "../core/entity";
@@ -18,13 +18,27 @@ export class GraphicsSystem extends AbstractSimpleSystem {
     }
 
     if (graphics.graphics) {
-      graphics.graphics.position.x = transform.position.x
-      graphics.graphics.position.y = transform.position.y
-      graphics.graphics.rotation = transform.rotation
+      const graphicsContainer = graphics.graphics
+      
+      const positionContainer = graphics.graphics.getChildByName('position') as Container
+      if (graphics.graphics.getChildByName('position')) {
+        positionContainer.x = transform.position.x
+        positionContainer.y = transform.position.y
+
+        const rotationContainer = positionContainer.getChildByName('rotation') as Container
+        if (rotationContainer) {
+          rotationContainer.rotation = transform.rotation
+        }
+
+      } else {
+        graphicsContainer.position.x = transform.position.x
+        graphicsContainer.position.y = transform.position.y
+        graphicsContainer.rotation = transform.rotation
+      }
 
       const health = ecs.getComponent<HealthComponent>(entity, ComponentTypes.Health)
       if (health) {
-        graphics.graphics.alpha = health.health / health.maxHealth
+        graphicsContainer.alpha = health.health / health.maxHealth
       }
     }
   }
@@ -237,5 +251,47 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
       transformSync.localTransformBuffer = transformSync.localTransformBuffer.filter(transform => transform.time < lastTransform.time)
       transformSync.transformBuffer.splice(0, transformSync.transformBuffer.length - 1)
     }
+  }
+}
+
+function findChildGraphicsObjectByName(container: Container, name: string): Container | undefined {
+  if (container === undefined) {
+    return undefined
+  }
+
+  if (container.name === name) {
+    return container
+  }
+
+  if (container.children.length < 0) {
+    return undefined
+  }
+
+  for (const child of container.children) {
+    const result = findChildGraphicsObjectByName(child as Container, name)
+    if (result) {
+      return result
+    }
+  }
+  return undefined
+}
+
+export class InventoryDisplaySystem extends AbstractSimpleSystem {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const transform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+    const graphics = ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
+    const inventory = ecs.getComponent<InventoryComponent>(entity, ComponentTypes.Inventory)
+
+    if (!transform || !graphics || !inventory) {
+      return
+    }
+
+    if (graphics.graphics) {
+      const inventoryDisplay = findChildGraphicsObjectByName(graphics.graphics, 'inventoryDisplay') as Text
+      if (inventoryDisplay) {
+        inventoryDisplay.text = inventory.materialCount.toString()
+        inventoryDisplay.pivot.set(inventoryDisplay.width / 2, inventoryDisplay.height / 2)
+      }
+    }1
   }
 }
