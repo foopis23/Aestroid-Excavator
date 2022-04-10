@@ -1,6 +1,6 @@
 import { collisions, kinematics } from "simple-game-physics";
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, HealthComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
+import { ColliderComponent, ComponentTypes, HealthComponent, InventoryComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
 import { EntityType, IEntity } from "./entity";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "./net";
@@ -339,10 +339,15 @@ export class TriggerSystem extends AbstractSimpleSystem {
   private handleTrigger(ecs: IECS, entity: IEntity, otherEntity: IEntity) {
     switch (entity.type) {
       case EntityType.Material:
-        if (otherEntity.type === EntityType.Player) {
-          this.serverSocket.emit('despawnEntity', { entityId: entity.id, time: Date.now() })
-          ecs.destroyEntity(entity)
+        {
+          const otherInventory = ecs.getComponent<InventoryComponent>(otherEntity, ComponentTypes.Inventory)
+          if (otherInventory) {
+            otherInventory.materialCount++;
+            this.serverSocket.emit('despawnEntity', { entityId: entity.id, time: Date.now() })
+            ecs.destroyEntity(entity)
+          }
         }
+
         break;
       case EntityType.Goal:
         break;

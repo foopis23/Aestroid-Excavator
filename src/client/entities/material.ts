@@ -26,6 +26,7 @@ export function createMaterialEntity(scene: Container, ecs: ECS, initial: Partia
     },
     [
       ComponentTypes.Transform,
+      ComponentTypes.TransformSync,
       ComponentTypes.Graphics
     ]
   );

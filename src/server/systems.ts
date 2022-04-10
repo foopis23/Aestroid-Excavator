@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { ComponentTypes, HealthComponent, IEntityData, LaserSpawnerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
+import { ColliderComponent, ComponentTypes, HealthComponent, IEntityData, InventoryComponent, LaserSpawnerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
 import { IECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "../core/net";
@@ -80,41 +80,53 @@ export class HealthSystem extends AbstractSimpleSystem {
           // TODO: if asteroid, spawn materials
           {
             const asteroidTransform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
-            if (!asteroidTransform) {
+            const asteroidCollider = ecs.getComponent<ColliderComponent>(entity, ComponentTypes.Collider)
+
+            if (!asteroidTransform || !asteroidCollider) {
               break
             }
 
-            const materialPartial: Partial<IEntityData> = {
-              position: {
-                x: asteroidTransform.position.x,
-                y: asteroidTransform.position.y,
-              },
-              triggerShape: 'circle',
-              triggerSize: { x: 5, y: 5 },
+            const materialCount = Math.max(Math.floor((asteroidCollider.size.x - 20 ) / 10), 1)
+
+            for (let i = 0; i < materialCount; i++) {
+              const materialPartial: Partial<IEntityData> = {
+                position: {
+                  x: asteroidTransform.position.x,
+                  y: asteroidTransform.position.y,
+                },
+                velocity: {
+                  x: (Math.random() * 10 * materialCount) - 5 * materialCount,
+                  y: (Math.random() * 10 * materialCount) - 5 * materialCount
+                },
+                hasDrag: true,
+                triggerShape: 'circle',
+                triggerSize: { x: 5, y: 5 },
+              }
+  
+              const material = ecs.createNewEntity(
+                EntityType.Material,
+                materialPartial,
+                [
+                  ComponentTypes.Transform,
+                  ComponentTypes.TriggerCollider,
+                  ComponentTypes.RigidBody
+                ]
+              )
+  
+              this.serverSocket.emit('spawnEntity', {
+                entityId: material.id,
+                type: EntityType.Material,
+                initial: materialPartial,
+                time: Date.now()
+              })
             }
-
-            const material = ecs.createNewEntity(
-              EntityType.Material,
-              materialPartial,
-              [
-                ComponentTypes.Transform,
-                ComponentTypes.TriggerCollider
-              ]
-            )
-
-            this.serverSocket.emit('spawnEntity', {
-              entityId: material.id,
-              type: EntityType.Material,
-              initial: materialPartial,
-              time: Date.now()
-            })
           }
 
           break;
         default:
           break;
       }
-      
+
       ecs.destroyEntity(entity)
       this.serverSocket.emit('despawnEntity', {
         entityId: entity.id,
@@ -125,7 +137,7 @@ export class HealthSystem extends AbstractSimpleSystem {
 }
 
 export class SyncHealthSystem extends AbstractNetworkSyncSystem {
-  constructor(syncRate: number, private serverSocket: Server) {
+  constructor(syncRate: number, private serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>) {
     super(syncRate)
   }
 
@@ -138,6 +150,25 @@ export class SyncHealthSystem extends AbstractNetworkSyncSystem {
     this.serverSocket.emit('syncHealth', {
       entityId: entity.id,
       health: health.health,
+      time: Date.now()
+    })
+  }
+}
+
+export class SyncInventorySystem extends AbstractNetworkSyncSystem {
+  constructor(syncRate: number, private serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>) {
+    super(syncRate)
+  }
+
+  sync(ecs: IECS, entity: IEntity): void {
+    const inventory = ecs.getComponent<InventoryComponent>(entity, ComponentTypes.PlayerInput)
+    if (!inventory) {
+      return
+    }
+
+    this.serverSocket.emit('syncInventory', {
+      entityId: entity.id,
+      materialCount: inventory.materialCount,
       time: Date.now()
     })
   }
