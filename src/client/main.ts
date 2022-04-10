@@ -2,4 +2,4 @@ import './style.css'
 
 import { ClientEngine } from './client-engine'
 
-new ClientEngine('localhost', 9500, 'ws')
+new ClientEngine('localhost', 'ws', 9500)

@@ -22,8 +22,8 @@ export class ClientEngine {
 
   constructor(
     protected readonly serverIP: string,
-    protected readonly serverPort: number,
-    protected readonly serverProtocol: string
+    protected readonly serverProtocol: string,
+    protected readonly serverPort?: number,
   ) {
     this.state = ClientState.INITIALIZING
 
@@ -39,7 +39,7 @@ export class ClientEngine {
 
     // setup network system
     this.state = ClientState.CONNECTING
-    this.socket = io(`${this.serverProtocol}://${this.serverIP}:${this.serverPort}`)
+    this.socket = io(`${this.serverProtocol}://${this.serverIP}:${this.serverPort ?? ''}`)
 
     // handle network events
     this.socket.on('connect', () => this.onConnect())
