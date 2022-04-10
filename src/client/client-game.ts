@@ -8,6 +8,7 @@ import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem 
 import { BASE_RESOLUTION, COLOR_SCHEME } from "./config";
 import { createAsteroid } from "./entities/asteroid";
 import { createLaserEntity } from "./entities/laser";
+import { createMaterialEntity } from "./entities/material";
 import { createPlayer } from "./entities/player";
 import { ClientPredictionSystem, GraphicsSystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
 
@@ -68,6 +69,9 @@ export class ClientGame {
         break;
       case EntityType.Projectile:
         createLaserEntity(this.scene, this.ecs, data.initial ?? {});
+        break;
+      case EntityType.Material:
+        createMaterialEntity(this.scene, this.ecs, data.initial ?? {});
         break;
       default:
         throw new Error("Unknown Entity Type From Server")

@@ -29,7 +29,7 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
         },
         rotation: transform.rotation + Math.PI / 2,
         triggerShape: 'circle',
-        triggerSize: {x: 5, y: 30},
+        triggerSize: { x: 5, y: 30 },
         velocity: {
           x: Math.cos(transform.rotation) * 1000,
           y: Math.sin(transform.rotation) * 1000,
@@ -69,10 +69,52 @@ export class HealthSystem extends AbstractSimpleSystem {
       return
     }
 
-    // TODO: if asteroid, spawn new asteroid
-    // TODO: if asteroid, spawn materials
-    // TODO: if player, drop inventory
     if (health.health <= 0) {
+
+      switch (entity.type) {
+        case EntityType.Player:
+          // TODO: if player, drop inventory
+          break;
+        case EntityType.Asteroid:
+          // TODO: if asteroid, spawn new asteroid
+          // TODO: if asteroid, spawn materials
+          {
+            const asteroidTransform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
+            if (!asteroidTransform) {
+              break
+            }
+
+            const materialPartial: Partial<IEntityData> = {
+              position: {
+                x: asteroidTransform.position.x,
+                y: asteroidTransform.position.y,
+              },
+              triggerShape: 'circle',
+              triggerSize: { x: 5, y: 5 },
+            }
+
+            const material = ecs.createNewEntity(
+              EntityType.Material,
+              materialPartial,
+              [
+                ComponentTypes.Transform,
+                ComponentTypes.TriggerCollider
+              ]
+            )
+
+            this.serverSocket.emit('spawnEntity', {
+              entityId: material.id,
+              type: EntityType.Material,
+              initial: materialPartial,
+              time: Date.now()
+            })
+          }
+
+          break;
+        default:
+          break;
+      }
+      
       ecs.destroyEntity(entity)
       this.serverSocket.emit('despawnEntity', {
         entityId: entity.id,
