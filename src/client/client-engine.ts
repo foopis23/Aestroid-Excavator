@@ -39,7 +39,7 @@ export class ClientEngine {
 
     // setup network system
     this.state = ClientState.CONNECTING
-    this.socket = io(`${this.serverProtocol}://${this.serverIP}:${this.serverPort ?? ''}`)
+    this.socket = io(`${this.serverProtocol}://${this.serverIP}${(this.serverIP)? ':' : ''}${this.serverPort ?? ''}`)
 
     // handle network events
     this.socket.on('connect', () => this.onConnect())
