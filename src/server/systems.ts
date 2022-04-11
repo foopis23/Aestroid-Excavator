@@ -77,7 +77,6 @@ export class HealthSystem extends AbstractSimpleSystem {
           break;
         case EntityType.Asteroid:
           // TODO: if asteroid, spawn new asteroid
-          // TODO: if asteroid, spawn materials
           {
             const asteroidTransform = ecs.getComponent<TransformComponent>(entity, ComponentTypes.Transform)
             const asteroidCollider = ecs.getComponent<ColliderComponent>(entity, ComponentTypes.Collider)
