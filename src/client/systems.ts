@@ -238,7 +238,7 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
 
       let lastTime = lastTransform.time;
       for (const input of inputComponent.inputBuffer) {
-        const dt = (input.time - lastTime / 1000)
+        const dt = (input.time - lastTime) / 1000
         inputComponent.lookRot = input.lookRot;
         inputComponent.moveInput = input.moveInput
         doPlayerInputHandleLoop(ecs, entity)
