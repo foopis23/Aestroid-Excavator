@@ -1,4 +1,4 @@
-import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent, InventoryComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent, InventoryComponent, LifetimeComponent } from "../core/components";
 import { AbstractNetworkSyncSystem, AbstractSimpleSystem, doCollisionLoop, doPhysicsLoop, doPlayerInputHandleLoop } from "../core/systems";
 import { Application, Container, Text } from "pixi.js";
 import { Vector2 } from "simple-game-math";
@@ -7,6 +7,7 @@ import { IEntity } from "../core/entity";
 import { useMousePos } from "./util/input";
 import { isKeyDown } from "./util/input";
 import { Socket } from "socket.io-client";
+import { clamp } from "simple-game-math/lib/Math";
 
 export class GraphicsSystem extends AbstractSimpleSystem {
   update(ecs: IECS, _dt: number, entity: IEntity): void {
@@ -228,17 +229,17 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
       inputComponent.inputBuffer = inputComponent.inputBuffer.filter(input => input.time > lastTransform.time);
 
       // if the distance between the last transform and the closest transform in history is too small, just return
-      if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < 40) {
+      const errorTolerance = 20 + 10 * Math.abs(lastTransform.time - closestTransformInHistory.time)
+      if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < errorTolerance) {
         return
       }
 
-      console.log('correcting player position')
       transform.position = lastTransform.value.position;
       transform.rotation = lastTransform.value.rotation;
 
       let lastTime = lastTransform.time;
       for (const input of inputComponent.inputBuffer) {
-        const dt = (input.time - lastTime / 1000)
+        const dt = (input.time - lastTime) / 1000
         inputComponent.lookRot = input.lookRot;
         inputComponent.moveInput = input.moveInput
         doPlayerInputHandleLoop(ecs, entity)
@@ -292,6 +293,42 @@ export class InventoryDisplaySystem extends AbstractSimpleSystem {
         inventoryDisplay.text = inventory.materialCount.toString()
         inventoryDisplay.pivot.set(inventoryDisplay.width / 2, inventoryDisplay.height / 2)
       }
-    }1
+    }
+  }
+}
+
+export class BlinkNearEndOfLifetimeSystem extends AbstractSimpleSystem {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const lifetime = ecs.getComponent<LifetimeComponent>(entity, ComponentTypes.Lifetime)
+    const graphics = ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
+
+    if (!lifetime || !graphics || !graphics.graphics) {
+      return
+    }
+
+    if (lifetime.flashTime <= 0) {
+      return
+    }
+
+    const now = Date.now()
+    const currentLifeLength = now - lifetime.spawnTime
+    if (lifetime.lifetime - currentLifeLength <= 0) {
+      graphics.graphics.alpha = 0
+      return
+    }
+    
+    // TODO: Maybe try to phase shift so that opacity is always 0 at the end of the lifetime
+    if (lifetime.lifetime - currentLifeLength < lifetime.flashTime) {
+      // change the speed of the blink by change the wave length of the sin function
+      // bigger number means smaller wave length means faster animation and vice versa
+      
+      const waveLength = (lifetime.flashTime / 2 > lifetime.lifetime - currentLifeLength)? 0.5 : 1
+      const a = 1
+      const b = (Math.PI * 2) / waveLength
+      const c = ((waveLength % lifetime.lifetime) + (waveLength / 2)) * b
+      const d = 0.5
+      const x = currentLifeLength / 1000
+      graphics.graphics.alpha = clamp(a * Math.cos( b * x + c ) + d, 0, 1)
+    }
   }
 }
