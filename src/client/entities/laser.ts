@@ -25,7 +25,8 @@ export function createLaserEntity(scene: Container, ecs: ECS, initial: Partial<I
     [
       ComponentTypes.Transform,
       ComponentTypes.RigidBody,
-      ComponentTypes.Graphics
+      ComponentTypes.Graphics,
+      ComponentTypes.Lifetime
     ]
   );
 }
