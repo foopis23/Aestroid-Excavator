@@ -10,7 +10,7 @@ import { createAsteroid } from "./entities/asteroid";
 import { createLaserEntity } from "./entities/laser";
 import { createMaterialEntity } from "./entities/material";
 import { createPlayer } from "./entities/player";
-import { ClientPredictionSystem, GraphicsSystem, InventoryDisplaySystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
+import { BlinkNearEndOfLifetimeSystem, ClientPredictionSystem, GraphicsSystem, InventoryDisplaySystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
 
 export class ClientGame {
   protected readonly ecs: ECS;
@@ -30,7 +30,8 @@ export class ClientGame {
       new TransformSmoothingSystem(200),
       new ClientPredictionSystem(),
       new GraphicsSystem(),
-      new InventoryDisplaySystem()
+      new InventoryDisplaySystem(),
+      new BlinkNearEndOfLifetimeSystem()
     )
 
     this.tickerCallback = (deltaFrame: number) => this.update(deltaFrame);

@@ -80,6 +80,7 @@ export interface InventoryComponent extends IComponent {
 export interface LifetimeComponent extends IComponent {
   lifetime: number;
   spawnTime: number;
+  flashTime: number;
 }
 
 export interface IEntityData extends 
@@ -125,6 +126,7 @@ export class EntityData implements IEntityData {
   materialCount: number;
   lifetime: number;
   spawnTime: number;
+  flashTime: number;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -154,5 +156,6 @@ export class EntityData implements IEntityData {
     this.materialCount = initial.materialCount ?? 0
     this.lifetime = initial.lifetime ?? 0
     this.spawnTime = initial.spawnTime ?? 0
+    this.flashTime = initial.flashTime ?? -1
   }
 }

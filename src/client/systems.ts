@@ -1,4 +1,4 @@
-import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent, InventoryComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent, InventoryComponent, LifetimeComponent } from "../core/components";
 import { AbstractNetworkSyncSystem, AbstractSimpleSystem, doCollisionLoop, doPhysicsLoop, doPlayerInputHandleLoop } from "../core/systems";
 import { Application, Container, Text } from "pixi.js";
 import { Vector2 } from "simple-game-math";
@@ -292,6 +292,36 @@ export class InventoryDisplaySystem extends AbstractSimpleSystem {
         inventoryDisplay.text = inventory.materialCount.toString()
         inventoryDisplay.pivot.set(inventoryDisplay.width / 2, inventoryDisplay.height / 2)
       }
-    }1
+    }
+  }
+}
+
+export class BlinkNearEndOfLifetimeSystem extends AbstractSimpleSystem {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const lifetime = ecs.getComponent<LifetimeComponent>(entity, ComponentTypes.Lifetime)
+    const graphics = ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
+
+    if (!lifetime || !graphics || !graphics.graphics) {
+      return
+    }
+
+    if (lifetime.flashTime <= 0) {
+      return
+    }
+
+    const now = Date.now()
+    const currentLifeLength = now - lifetime.spawnTime
+    if (lifetime.lifetime - currentLifeLength <= 0) {
+      graphics.graphics.alpha = 0
+      return
+    }
+    
+    // TODO: Maybe try to phase shift so that opacity is always 0 at the end of the lifetime
+    if (lifetime.lifetime - currentLifeLength < lifetime.flashTime) {
+      // change the speed of the blink by change the wave length of the sin function
+      // bigger number means smaller wave length means faster animation and vice versa
+      const animationSpeed = (currentLifeLength / lifetime.lifetime) * 16
+      graphics.graphics.alpha = Math.sin(Math.floor(currentLifeLength / 1000) * animationSpeed) / 2 + 0.5
+    }
   }
 }
