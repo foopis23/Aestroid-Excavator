@@ -228,11 +228,11 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
       inputComponent.inputBuffer = inputComponent.inputBuffer.filter(input => input.time > lastTransform.time);
 
       // if the distance between the last transform and the closest transform in history is too small, just return
-      if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < 40) {
+      const errorTolerance = 20 + 10 * Math.abs(lastTransform.time - closestTransformInHistory.time)
+      if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < errorTolerance) {
         return
       }
 
-      console.log('correcting player position')
       transform.position = lastTransform.value.position;
       transform.rotation = lastTransform.value.rotation;
 

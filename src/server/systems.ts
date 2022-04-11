@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, HealthComponent, IEntityData, InventoryComponent, LaserSpawnerComponent, PlayerInputComponent, TransformComponent } from "../core/components";
+import { ColliderComponent, ComponentTypes, HealthComponent, IEntityData, InventoryComponent, LaserSpawnerComponent, LifetimeComponent, PlayerInputComponent, TransformComponent } from "../core/components";
 import { IECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "../core/net";
@@ -36,7 +36,9 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
           x: Math.cos(transform.rotation) * 1000,
           y: Math.sin(transform.rotation) * 1000,
         },
-        hasDrag: false
+        hasDrag: false,
+        lifetime: 2000,
+        spawnTime: Date.now(),
       }
 
       const laser = ecs.createNewEntity(
@@ -45,7 +47,8 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
         [
           ComponentTypes.Transform,
           ComponentTypes.RigidBody,
-          ComponentTypes.TriggerCollider
+          ComponentTypes.TriggerCollider,
+          ComponentTypes.Lifetime
         ]
       )
 
@@ -172,5 +175,26 @@ export class SyncInventorySystem extends AbstractNetworkSyncSystem {
       materialCount: inventory.materialCount,
       time: Date.now()
     })
+  }
+}
+
+export class LifetimeSystem extends AbstractSimpleSystem {
+  constructor(private serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>) {
+    super()
+  }
+
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const lifetime = ecs.getComponent<LifetimeComponent>(entity, ComponentTypes.Lifetime)
+    if (!lifetime) {
+      return
+    }
+
+    if (Date.now() - lifetime.spawnTime > lifetime.lifetime) {
+      ecs.destroyEntity(entity)
+      this.serverSocket.emit('despawnEntity', {
+        entityId: entity.id,
+        time: Date.now()
+      })
+    }
   }
 }
