@@ -24,6 +24,7 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
       laserSpawn.lastFireTime = Date.now()
       const initial: Partial<IEntityData> = {
         position: {
+          // TODO: remove hardcoded values
           x: transform.position.x + Math.cos(transform.rotation) * (11 + 30),
           y: transform.position.y + Math.sin(transform.rotation) * (11 + 30),
         },
@@ -31,6 +32,7 @@ export class PlayerLaserSpawnSystem extends AbstractSimpleSystem {
         triggerShape: 'circle',
         triggerSize: { x: 5, y: 30 },
         velocity: {
+          // TODO: remove hardcoded values
           x: Math.cos(transform.rotation) * 1000,
           y: Math.sin(transform.rotation) * 1000,
         },
