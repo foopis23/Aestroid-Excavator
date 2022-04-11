@@ -7,6 +7,7 @@ import { IEntity } from "../core/entity";
 import { useMousePos } from "./util/input";
 import { isKeyDown } from "./util/input";
 import { Socket } from "socket.io-client";
+import { clamp } from "simple-game-math/lib/Math";
 
 export class GraphicsSystem extends AbstractSimpleSystem {
   update(ecs: IECS, _dt: number, entity: IEntity): void {
@@ -320,8 +321,14 @@ export class BlinkNearEndOfLifetimeSystem extends AbstractSimpleSystem {
     if (lifetime.lifetime - currentLifeLength < lifetime.flashTime) {
       // change the speed of the blink by change the wave length of the sin function
       // bigger number means smaller wave length means faster animation and vice versa
-      const animationSpeed = (currentLifeLength / lifetime.lifetime) * 16
-      graphics.graphics.alpha = Math.sin(Math.floor(currentLifeLength / 1000) * animationSpeed) / 2 + 0.5
+      
+      const waveLength = (lifetime.flashTime / 2 > lifetime.lifetime - currentLifeLength)? 0.5 : 1
+      const a = 1
+      const b = (Math.PI * 2) / waveLength
+      const c = ((waveLength % lifetime.lifetime) + (waveLength / 2)) * b
+      const d = 0.5
+      const x = currentLifeLength / 1000
+      graphics.graphics.alpha = clamp(a * Math.cos( b * x + c ) + d, 0, 1)
     }
   }
 }

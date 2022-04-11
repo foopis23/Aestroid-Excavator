@@ -105,9 +105,9 @@ export class HealthSystem extends AbstractSimpleSystem {
                 hasDrag: true,
                 triggerShape: 'circle',
                 triggerSize: { x: 5, y: 5 },
-                lifetime: 10000,
+                lifetime: 15000,
                 spawnTime: Date.now(),
-                flashTime: 3000
+                flashTime: 5000
               }
   
               const material = ecs.createNewEntity(
