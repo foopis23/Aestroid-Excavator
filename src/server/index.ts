@@ -7,6 +7,7 @@ require(`dotenv-defaults`).config({
 
 import { getFloatFromEnv, getIntFromEnv } from './config';
 import { ServerEngine } from './server-engine'
+import AgonesSDK from '@google-cloud/agones-sdk'
 
 // config
 const port = getIntFromEnv('PORT', 9500);
@@ -15,4 +16,7 @@ const maxPlayers = getIntFromEnv('MAX_PLAYERS', 2)
 const serverTickRate = getFloatFromEnv('SERVER_TICK_RATE', 1000 / 60)
 
 // create server
-new ServerEngine(port, origin, maxPlayers, serverTickRate)
+const agonesSDK = new AgonesSDK();
+agonesSDK.connect().then(() => {
+  new ServerEngine(port, origin, maxPlayers, serverTickRate, agonesSDK)
+});
