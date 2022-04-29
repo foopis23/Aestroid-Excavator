@@ -1,6 +1,7 @@
+import { Vector2 } from "simple-game-math";
 import { collisions, kinematics } from "simple-game-physics";
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, HealthComponent, InventoryComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
+import { ColliderComponent, ComponentTypes, HealthComponent, IEntityData, InventoryComponent, LocalPlayerComponent, PlayerInputComponent, RigidBodyComponent, TransformComponent, TransformSyncComponent, TriggerColliderComponent } from "./components";
 import { IECS } from "./ecs";
 import { EntityType, IEntity } from "./entity";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "./net";
@@ -354,8 +355,64 @@ export class TriggerSystem extends AbstractSimpleSystem {
       case EntityType.Projectile:
         {
           const health = ecs.getComponent<HealthComponent>(otherEntity, ComponentTypes.Health)
+          const inventory = ecs.getComponent<InventoryComponent>(otherEntity, ComponentTypes.Inventory)
+          const transform = ecs.getComponent<TransformComponent>(otherEntity, ComponentTypes.Transform)
+          const rigidBody = ecs.getComponent<RigidBodyComponent>(otherEntity, ComponentTypes.RigidBody)
+
           if (health) {
             health.health -= 10
+          } else if (inventory && transform && rigidBody) {
+            if (inventory.materialCount > 0) {
+              inventory.materialCount--;
+              let spawnDirection;
+
+              if (Vector2.mag(rigidBody.velocity) > 3) {
+                spawnDirection = Vector2.normalize(rigidBody.velocity);
+                spawnDirection.x *= -1;
+                spawnDirection.y *= -1;  
+              } else {
+                spawnDirection = {
+                  x: Math.random() * 2 - 1,
+                  y: Math.random() * 2 - 1
+                }
+              }
+
+
+              const materialPartial: Partial<IEntityData> = {
+                position: {
+                  x: transform.position.x + spawnDirection.x * 50 + Math.random() * 40 - 20,
+                  y: transform.position.y + spawnDirection.y * 50 + Math.random() * 40 - 20
+                },
+                velocity: {
+                  x: spawnDirection.x * Math.random() * 10,
+                  y: spawnDirection.y * Math.random() * 10
+                },
+                hasDrag: true,
+                triggerShape: 'circle',
+                triggerSize: { x: 5, y: 5 },
+                lifetime: 15000,
+                spawnTime: Date.now(),
+                flashTime: 5000
+              }
+
+              const material = ecs.createNewEntity(
+                EntityType.Material,
+                materialPartial,
+                [
+                  ComponentTypes.Transform,
+                  ComponentTypes.TriggerCollider,
+                  ComponentTypes.RigidBody,
+                  ComponentTypes.Lifetime
+                ]
+              )
+
+              this.serverSocket.emit('spawnEntity', {
+                entityId: material.id,
+                type: EntityType.Material,
+                initial: materialPartial,
+                time: Date.now()
+              })
+            }
           }
           this.serverSocket.emit('despawnEntity', {
             entityId: entity.id,

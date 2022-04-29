@@ -60,6 +60,9 @@ export class ClientEngine {
     this.game = undefined
     this.state = ClientState.DISCONNECTED
     console.log('Disconnected from server')
+
+    // TODO: eventually make this better
+    window.location.reload();
   }
 
   protected onWaitForPlayers(lookingFor: number) {
@@ -83,5 +86,8 @@ export class ClientEngine {
     this.game = undefined
     this.state = ClientState.LOBBY
     console.log('Ending game')
+
+    // TODO: eventually make this better
+    window.location.reload();
   }
 }
