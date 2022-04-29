@@ -14,9 +14,14 @@ const port = getIntFromEnv('PORT', 9500);
 const origin = process.env.CORS_URL
 const maxPlayers = getIntFromEnv('MAX_PLAYERS', 2)
 const serverTickRate = getFloatFromEnv('SERVER_TICK_RATE', 1000 / 60)
+const useAgones = getIntFromEnv('USE_AGONES', 1)
 
 // create server
-const agonesSDK = new AgonesSDK();
-agonesSDK.connect().then(() => {
-  new ServerEngine(port, origin, maxPlayers, serverTickRate, agonesSDK)
-});
+if (useAgones) {
+  const agonesSDK = new AgonesSDK();
+  agonesSDK.connect().then(() => {
+    new ServerEngine(port, origin, maxPlayers, serverTickRate, agonesSDK)
+  });
+} else {
+  new ServerEngine(port, origin, maxPlayers, serverTickRate)
+}
