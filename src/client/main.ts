@@ -1,6 +1,6 @@
 import './style.css'
 import io, { Socket } from 'socket.io-client'
-import { createApp } from 'https://unpkg.com/petite-vue?module'
+import { createApp } from '../../node_modules/petite-vue/dist/petite-vue.es'
 
 let socket: Socket | null = null;
 
@@ -87,6 +87,10 @@ const app = createApp({
   copyToClipboard(e) {
     const buttonEl = e.target as HTMLButtonElement;
     const value = buttonEl.getAttribute('data-copy');
+    if (!value) {
+      return;
+    }
+
     navigator.clipboard.writeText(value);
     buttonEl.innerText = 'Copied'
     setTimeout(() => {
