@@ -116,6 +116,7 @@ export class ClientGame {
             rotation: data.rotation,
           }
         })
+        transformSync.clientTime = Date.now()
       }
     }
   }

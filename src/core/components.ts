@@ -67,6 +67,7 @@ export interface GraphicsComponent extends IComponent {
 export interface TransformSyncComponent extends IComponent {
   transformBuffer: { value: TransformComponent, time: number }[];
   localTransformBuffer: {value: TransformComponent, time: number}[];
+  clientTime: number;
 }
 
 export interface HealthComponent extends IComponent {
@@ -136,6 +137,7 @@ export class EntityData implements IEntityData {
   flashTime: number;
   timerStart: number;
   timerDuration: number;
+  clientTime: number;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -168,5 +170,6 @@ export class EntityData implements IEntityData {
     this.flashTime = initial.flashTime ?? -1
     this.timerStart = initial.timerStart ?? 0
     this.timerDuration = initial.timerDuration ?? 0
+    this.clientTime = initial.clientTime ?? 0
   }
 }
