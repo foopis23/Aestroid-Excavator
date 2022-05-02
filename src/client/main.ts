@@ -3,13 +3,15 @@ import io, { Socket } from 'socket.io-client'
 import { createApp } from '../../node_modules/petite-vue/dist/petite-vue.es'
 
 let socket: Socket | null = null;
+const matchMakingUrl = import.meta.env.VITE_MATCH_MAKING_URL as string;
+console.log(matchMakingUrl)
 
 const app = createApp({
   state: 'connecting',
   roomId: null,
   baseURL: window.location.href,
   mounted() {
-    socket = io('ws://localhost:8000')
+    socket = io(matchMakingUrl)
     socket.on('connect', () => this.onConnected())
     socket.on('room-created', (roomId) => this.onRoomCreated(roomId))
     socket.on('room-joined', (roomId) => this.onRoomJoined(roomId))
