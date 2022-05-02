@@ -6,7 +6,7 @@
     "dev-server": "nodemon",
     "build-client": "tsc --project client.tsconfig.json && vite build",
     "build-server": "tsc --project server.tsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview --host"
   },
   "devDependencies": {
     "@types/offscreencanvas": "^2019.6.4",
