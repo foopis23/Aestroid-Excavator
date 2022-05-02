@@ -1,6 +1,7 @@
+import { SyncTimerPacket } from './../core/net';
 import { Application, Container, settings, TickerCallback } from "pixi.js";
 import { Socket } from "socket.io-client";
-import { ComponentTypes, GraphicsComponent, HealthComponent, InventoryComponent, TransformSyncComponent } from "../core/components";
+import { ComponentTypes, GraphicsComponent, HealthComponent, InventoryComponent, TimerComponent, TransformSyncComponent } from "../core/components";
 import { ECS } from "../core/ecs";
 import { EntityType } from "../core/entity";
 import { EntityPacket, SpawnEntityPacket, SyncHealthPacket, SyncInventoryPacket, SyncTransformPacket } from "../core/net";
@@ -10,7 +11,8 @@ import { createAsteroid } from "./entities/asteroid";
 import { createLaserEntity } from "./entities/laser";
 import { createMaterialEntity } from "./entities/material";
 import { createPlayer } from "./entities/player";
-import { BlinkNearEndOfLifetimeSystem, ClientPredictionSystem, GraphicsSystem, InventoryDisplaySystem, PollInputSystem, SyncInputSystem, TransformSmoothingSystem } from "./systems";
+import { BlinkNearEndOfLifetimeSystem, ClientPredictionSystem, GraphicsSystem, InventoryDisplaySystem, PollInputSystem, SyncInputSystem, TimerDisplaySystem, TransformSmoothingSystem } from "./systems";
+import { createGameTimer } from './entities/timer';
 
 export class ClientGame {
   protected readonly ecs: ECS;
@@ -31,6 +33,7 @@ export class ClientGame {
       new ClientPredictionSystem(),
       new GraphicsSystem(),
       new InventoryDisplaySystem(),
+      new TimerDisplaySystem(),
       new BlinkNearEndOfLifetimeSystem()
     )
 
@@ -46,6 +49,7 @@ export class ClientGame {
     this.socket.on("assignPlayerId", (data: number) => this.assignPlayerId(data))
     this.socket.on("syncHealth", (data: SyncHealthPacket) => this.syncHealth(data))
     this.socket.on("syncInventory", (data: SyncInventoryPacket) => this.syncInventory(data))
+    this.socket.on("syncTimer", (data: SyncTimerPacket) => this.syncTimer(data))
   }
 
   public spawnEntity(data: SpawnEntityPacket) {
@@ -75,6 +79,9 @@ export class ClientGame {
         break;
       case EntityType.Material:
         createMaterialEntity(this.scene, this.ecs, data.initial ?? {});
+        break;
+      case EntityType.GameTimer:
+        createGameTimer(this.scene, this.ecs, data.initial ?? {});
         break;
       default:
         throw new Error("Unknown Entity Type From Server")
@@ -129,6 +136,17 @@ export class ClientGame {
       const inventory = this.ecs.getComponent<InventoryComponent>(entity, ComponentTypes.Inventory)
       if (inventory) {
         inventory.materialCount = data.materialCount
+      }
+    }
+  }
+
+  public syncTimer(data: SyncTimerPacket) {
+    const entity = this.ecs.entities[data.entityId]
+    if (entity) {
+      const timer = this.ecs.getComponent<TimerComponent>(entity, ComponentTypes.Timer)
+      if (timer) {
+        timer.timerStart = data.timerStart
+        timer.timerDuration = data.timerDuration
       }
     }
   }
