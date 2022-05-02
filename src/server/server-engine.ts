@@ -90,6 +90,11 @@ export class ServerEngine {
       return
     }
 
+    if (this.game) {
+      const report = this.game.getAfterGameReport()
+      this.serverSocket.emit('AFTER_GAME_REPORT', report)
+    }
+
     this.serverSocket.emit('END_GAME')
     this.game?.destroy();
     this.game = undefined

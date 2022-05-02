@@ -50,6 +50,7 @@ export class ClientGame {
     this.socket.on("syncHealth", (data: SyncHealthPacket) => this.syncHealth(data))
     this.socket.on("syncInventory", (data: SyncInventoryPacket) => this.syncInventory(data))
     this.socket.on("syncTimer", (data: SyncTimerPacket) => this.syncTimer(data))
+    this.socket.on("AFTER_GAME_REPORT", (data: { entityId: number, score: number }[]) => this.afterGameReport(data))
   }
 
   public spawnEntity(data: SpawnEntityPacket) {
@@ -101,6 +102,7 @@ export class ClientGame {
   }
 
   public assignPlayerId(playerId: number) {
+    console.log("Assigned player id: " + playerId);
     this.localPlayerId = playerId
   }
 
@@ -151,6 +153,12 @@ export class ClientGame {
         timer.timerDuration = data.timerDuration
       }
     }
+  }
+
+  public afterGameReport(data: { entityId: number, score: number }[]) {
+    const lastGameId = (this.localPlayerId)? this.localPlayerId.toString() : "-1";
+    window.localStorage.setItem("afterGameReport", JSON.stringify(data))
+    window.localStorage.setItem("lastPlayerId", lastGameId)
   }
 
   public start() {

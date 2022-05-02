@@ -10,6 +10,7 @@ const app = createApp({
   state: 'connecting',
   roomId: null,
   baseURL: window.location.href,
+  afterGameReport: null,
   mounted() {
     socket = io(matchMakingUrl)
     socket.on('connect', () => this.onConnected())
@@ -20,6 +21,13 @@ const app = createApp({
     socket.on('room-full', () => this.onRoomFull())
     socket.on('room-not-found', () => this.onRoomNotFound()),
     socket.on('game-server-not-found', () => this.onGameServerNotFound())
+
+    const rawReport = window.localStorage.getItem('afterGameReport')
+    const lastPlayerId = window.localStorage.getItem('lastPlayerId')
+    if (rawReport != null && rawReport.length > 0 && lastPlayerId != null && lastPlayerId.length > 0) {
+      this.afterGameReport = JSON.parse(rawReport)
+      this.lastPlayerId = parseInt(lastPlayerId)
+    }
   },
   createRoom() {
     if (!socket) {
@@ -52,12 +60,18 @@ const app = createApp({
     this.state = 'main-menu'
 
     const url = new URL(window.location.href);
-    url.searchParams.forEach((value, key) => {
-      if (key === 'roomId') {
+    for (const [key, value] of url.searchParams) {
+      if (key === 'code') {
         this.joinRoomWithCode(value)
+        window.history.replaceState({}, document.title, "/");
+        return
       }
-    })
-    window.history.replaceState({}, document.title, "/");
+    }
+    
+    if (this.afterGameReport) {
+      this.state = 'after-game-report'
+      return
+    }
   },
   onRoomCreated(roomId: string) {
     this.roomId = roomId
@@ -99,6 +113,11 @@ const app = createApp({
       buttonEl.innerText = 'Copy'
     }, 1000)
   },
+  exitAfterGameReport() {
+    this.state = 'main-menu'
+    this.afterGameReport = null
+    window.localStorage.removeItem('afterGameReport')
+  },
   onRoomFull() {
     this.state = 'room-full'
     alert('❗❗Room is full❗❗')
@@ -116,6 +135,24 @@ const app = createApp({
     alert('❗❗Game server not found❗❗')
     this.state = 'main-menu'
     this.room = null
+  },
+  getWonText() {
+    if (this.afterGameReport == null) {
+      return ''
+    }
+
+    const winner = this.afterGameReport.reduce((winner, curr) => {
+      if (curr.score > winner.score) {
+        return curr
+      }
+      return winner
+    }, this.afterGameReport[0])
+
+    if (winner.entityId === this.lastPlayerId) {
+      return 'You won!'
+    } else {
+      return `You lost...`
+    }
   }
 });
 

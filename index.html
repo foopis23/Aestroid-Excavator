@@ -45,6 +45,29 @@
     <div class="waiting-for-game-server" v-if="state==='waiting-for-game-server'">
       <p>Waiting for game server...</p>
     </div>
+    <div class="after-game-report" v-if="state==='after-game-report'">
+      <h2>Game Report</h2>
+      <div class="report-box">
+        <p style="font-size: 1.5rem">{{getWonText()}}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(player, index) in afterGameReport">
+              <td>{{player.entityId}}</td>
+              <td>{{player.score}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="button-container">
+        <button class="button" @click="exitAfterGameReport()">Back To Main</button>
+      </div>
+    </div>
   </div>
   <script type="module" src="/src/client/main.ts"></script>
 </body>

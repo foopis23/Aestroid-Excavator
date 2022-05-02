@@ -1,3 +1,4 @@
+import { InventoryComponent } from './../core/components';
 import { Vector2 } from "simple-game-math";
 import { Server, Socket } from "socket.io";
 import { ComponentTypes, IEntityData, PlayerInputComponent } from "../core/components";
@@ -137,7 +138,7 @@ export class ServerGame {
       ]
     );
 
-    socket.emit('assignPlayerId', player.id)
+    this.serverSocket.to(socket.id).emit('assignPlayerId', player.id);
 
     // emit initial data
     this.serverSocket.emit('spawnEntity', {
@@ -198,6 +199,25 @@ export class ServerGame {
         }
       }
     }
+  }
+
+  public getAfterGameReport() {
+    return this.ecs.entities.map((entity) => {
+      if (entity === null) {
+        return null
+      }
+
+      const inventory = this.ecs.getComponent<InventoryComponent>(entity, ComponentTypes.Inventory)
+
+      if (inventory === undefined || entity.type !== EntityType.Player) {
+        return null
+      }
+
+      return {
+        entityId: entity.id,
+        score: inventory.materialCount
+      };
+    }).filter((entity) => entity !== null)
   }
 
   public destroy() {
