@@ -79,13 +79,13 @@ export class ServerEngine {
   protected startGame() {
     this.serverSocket.emit('INITIALIZE_GAME')
 
-    this.game = new ServerGame(this.serverSocket, this.serverTickRate)
+    this.game = new ServerGame(this.serverSocket, this.serverTickRate, this)
     this.state = ServerState.GAME
 
     this.serverSocket.emit('START_GAME')
   }
 
-  protected endGame() {
+  public endGame() {
     if (this.state !== ServerState.GAME) {
       return
     }

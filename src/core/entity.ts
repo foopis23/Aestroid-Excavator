@@ -4,6 +4,7 @@ export enum EntityType {
   Material = 3,
   Goal = 4,
   Projectile = 5,
+  GameTimer = 6,
 }
 
 export interface IEntity {

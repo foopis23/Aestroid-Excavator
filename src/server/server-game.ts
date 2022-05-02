@@ -5,7 +5,8 @@ import { ECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IPlayerInputPacket, IServerToClientEvents, ISocketData } from "../core/net";
 import { BoundsSystem, CollisionSystem, PhysicsSystem, PlayerInputHandlerSystem, TriggerSystem } from "../core/systems";
-import { HealthSystem, LifetimeSystem, PlayerLaserSpawnSystem, SyncHealthSystem, SyncInventorySystem } from "./systems";
+import { ServerEngine } from "./server-engine";
+import { HealthSystem, LifetimeSystem, PlayerLaserSpawnSystem, SyncHealthSystem, SyncInventorySystem, TimerEndGameSystem, TimerSyncSystem } from "./systems";
 import { TransformSyncSystem } from "./transform-sync";
 
 export class ServerGame {
@@ -17,7 +18,8 @@ export class ServerGame {
 
   constructor(
     protected serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>,
-    SERVER_TICK_RATE: number
+    SERVER_TICK_RATE: number,
+    serverEngine: ServerEngine
   ) {
     this.ecs = new ECS(
       new PlayerInputHandlerSystem(),
@@ -30,9 +32,13 @@ export class ServerGame {
       new BoundsSystem({ x: 0, y: 0, w: 1440, h: 1080 }),
       new HealthSystem(serverSocket),
 
+      // system ends game at end of timer
+      new TimerEndGameSystem(serverEngine),
+
       // less important sync systems run last and at a slower sync rate
       new SyncHealthSystem(1/5, serverSocket),
       new SyncInventorySystem(1/5, serverSocket),
+      new TimerSyncSystem(1, serverSocket),
       new LifetimeSystem(serverSocket)
     );
     this.socketIdToPlayerEntityId = new Map<string, number>();
@@ -48,6 +54,8 @@ export class ServerGame {
     for (let i = 0; i < 10; i++) {
       this.spawnAsteroidServerEntity()
     }
+
+    this.spawnGameTimerEntity();
 
     this.lastTick = Date.now();
     this.intervalHandle = setInterval(() => this.tick(), SERVER_TICK_RATE)
@@ -142,6 +150,30 @@ export class ServerGame {
     this.socketIdToPlayerEntityId.set(socket.id, player.id)
 
     return player
+  }
+
+  protected spawnGameTimerEntity(): IEntity {
+    const initialData: Partial<IEntityData> = {
+      timerStart: Date.now(),
+      timerDuration: 90 * 1000
+    }
+
+    const entity = this.ecs.createNewEntity(
+      EntityType.GameTimer,
+      initialData,
+      [
+        ComponentTypes.Timer
+      ]
+    );
+
+    this.serverSocket.emit('spawnEntity', {
+      entityId: entity.id,
+      type: EntityType.GameTimer,
+      time: Date.now(),
+      initial: initialData,
+    })
+
+    return entity
   }
 
   protected tick() {

@@ -14,6 +14,7 @@ export enum ComponentTypes {
   Health = 512,
   Inventory = 1024,
   Lifetime = 2048,
+  Timer = 4096,
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -83,6 +84,11 @@ export interface LifetimeComponent extends IComponent {
   flashTime: number;
 }
 
+export interface TimerComponent extends IComponent {
+  timerStart: number;
+  timerDuration: number;
+}
+
 export interface IEntityData extends 
 TransformComponent,
 RigidBodyComponent,
@@ -95,7 +101,8 @@ TriggerColliderComponent,
 LaserSpawnerComponent,
 HealthComponent,
 InventoryComponent,
-LifetimeComponent
+LifetimeComponent,
+TimerComponent
 { }
 
 export class EntityData implements IEntityData {
@@ -127,6 +134,8 @@ export class EntityData implements IEntityData {
   lifetime: number;
   spawnTime: number;
   flashTime: number;
+  timerStart: number;
+  timerDuration: number;
 
   constructor(initial: Partial<IEntityData> = {}) {
     this.static = initial.static ?? true
@@ -157,5 +166,7 @@ export class EntityData implements IEntityData {
     this.lifetime = initial.lifetime ?? 0
     this.spawnTime = initial.spawnTime ?? 0
     this.flashTime = initial.flashTime ?? -1
+    this.timerStart = initial.timerStart ?? 0
+    this.timerDuration = initial.timerDuration ?? 0
   }
 }

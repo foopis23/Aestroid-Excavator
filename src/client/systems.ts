@@ -1,3 +1,4 @@
+import { TimerComponent } from './../core/components';
 import { ComponentTypes, GraphicsComponent, TransformComponent, LocalPlayerComponent, PlayerInputComponent, TransformSyncComponent, HealthComponent, InventoryComponent, LifetimeComponent } from "../core/components";
 import { AbstractNetworkSyncSystem, AbstractSimpleSystem, doCollisionLoop, doPhysicsLoop, doPlayerInputHandleLoop } from "../core/systems";
 import { Application, Container, Text } from "pixi.js";
@@ -329,6 +330,25 @@ export class BlinkNearEndOfLifetimeSystem extends AbstractSimpleSystem {
       const d = 0.5
       const x = currentLifeLength / 1000
       graphics.graphics.alpha = clamp(a * Math.cos( b * x + c ) + d, 0, 1)
+    }
+  }
+}
+
+export class TimerDisplaySystem extends AbstractSimpleSystem {
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const graphics = ecs.getComponent<GraphicsComponent>(entity, ComponentTypes.Graphics)
+    const timer = ecs.getComponent<TimerComponent>(entity, ComponentTypes.Timer)
+
+    if (!graphics || !timer) {
+      return
+    }
+
+    if (graphics.graphics) {
+      const timerDisplay = findChildGraphicsObjectByName(graphics.graphics, 'timerDisplay') as Text
+      if (timerDisplay) {
+        timerDisplay.text = Math.ceil((timer.timerDuration - (Date.now() - timer.timerStart))/1000).toString()
+        timerDisplay.pivot.set(timerDisplay.width / 2, 0)
+      }
     }
   }
 }
