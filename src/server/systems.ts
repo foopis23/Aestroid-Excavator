@@ -1,5 +1,6 @@
+import { ServerEngine } from './server-engine';
 import { Server } from "socket.io";
-import { ColliderComponent, ComponentTypes, HealthComponent, IEntityData, InventoryComponent, LaserSpawnerComponent, LifetimeComponent, PlayerInputComponent, TransformComponent } from "../core/components";
+import { ColliderComponent, ComponentTypes, HealthComponent, IEntityData, InventoryComponent, LaserSpawnerComponent, LifetimeComponent, PlayerInputComponent, TimerComponent, TransformComponent } from "../core/components";
 import { IECS } from "../core/ecs";
 import { EntityType, IEntity } from "../core/entity";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "../core/net";
@@ -199,6 +200,44 @@ export class LifetimeSystem extends AbstractSimpleSystem {
         entityId: entity.id,
         time: Date.now()
       })
+    }
+  }
+}
+
+export class TimerSyncSystem extends AbstractNetworkSyncSystem {
+  constructor(syncRate: number, private serverSocket: Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>) {
+    super(syncRate)
+  }
+
+  sync(ecs: IECS, entity: IEntity): void {
+    const timer = ecs.getComponent<TimerComponent>(entity, ComponentTypes.Timer)
+    
+    if (!timer) {
+      return
+    }
+    
+    this.serverSocket.emit('syncTimer', {
+      entityId: entity.id,
+      timerStart: timer.timerStart,
+      timerDuration: timer.timerDuration,
+      time: Date.now()
+    })
+  }
+}
+
+export class TimerEndGameSystem extends AbstractSimpleSystem {
+  constructor(private readonly serverEngine: ServerEngine) {
+    super()
+  }
+
+  update(ecs: IECS, _dt: number, entity: IEntity): void {
+    const timer = ecs.getComponent<TimerComponent>(entity, ComponentTypes.Timer)
+    if (!timer) {
+      return
+    }
+
+    if (Date.now() - timer.timerStart > timer.timerDuration) {
+      this.serverEngine.endGame();
     }
   }
 }
