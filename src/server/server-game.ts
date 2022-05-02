@@ -1,3 +1,4 @@
+import { Vector2 } from "simple-game-math";
 import { Server, Socket } from "socket.io";
 import { ComponentTypes, IEntityData, PlayerInputComponent } from "../core/components";
 import { ECS } from "../core/ecs";
@@ -55,7 +56,7 @@ export class ServerGame {
   protected spawnAsteroidServerEntity(): IEntity {
     const radius = (Math.random() * 60) + 20
 
-    const points = []
+    const points: Vector2.IVector2[] = []
     const numPoints = Math.random() * 6 + 4
 
     for (let p = 0; p < numPoints; p++) {

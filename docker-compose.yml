@@ -1,0 +1,7 @@
+services:
+  server:
+    image: ghcr.io/foopis23/asteroid-excavator:main
+    ports:
+      - "9500:9500"
+    volumes:
+      - ./.env:/usr/src/app/.env

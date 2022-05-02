@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "../core/net";
 import { ServerGame } from "./server-game";
+import { AgonesSDK } from "@google-cloud/agones-sdk";
 
 enum ServerState {
   LOBBY,
@@ -12,8 +13,9 @@ export class ServerEngine {
   protected playerCount;
   protected game: ServerGame | undefined;
   protected serverSocket: Server;
+  protected healthInterval: NodeJS.Timeout | undefined;
 
-  constructor(port = 9500, origin = "", protected readonly maxPlayers: number = 2, protected readonly serverTickRate = 1000 / 60) {
+  constructor(port = 9500, origin = "", protected readonly maxPlayers: number = 2, protected readonly serverTickRate = 1000 / 60, protected readonly agonesSDK: AgonesSDK | undefined = undefined) {
     this.state = ServerState.LOBBY
     this.playerCount = 0;
     this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
@@ -26,6 +28,15 @@ export class ServerEngine {
     this.serverSocket.on('connection', (socket: Socket) => this.onConnect(socket))
     this.serverSocket.listen(port)
     console.log(`Server is listening at ws://localhost:${port}`)
+
+    if (this.agonesSDK) {
+      agonesSDK.ready();
+
+      agonesSDK.health();
+      this.healthInterval = setInterval(() => {
+        agonesSDK.health();
+      }, 1000);
+    }
   }
 
   protected onConnect(socket: Socket) {
@@ -47,6 +58,10 @@ export class ServerEngine {
     }
 
     if (this.playerCount === this.maxPlayers) {
+      if (this.agonesSDK) {
+        this.agonesSDK.allocate();
+      }
+
       this.startGame()
     }
   }
@@ -79,5 +94,15 @@ export class ServerEngine {
     this.game?.destroy();
     this.game = undefined
     this.state = ServerState.LOBBY
+
+    if (this.healthInterval) {
+      clearInterval(this.healthInterval);
+    }
+
+    if (this.agonesSDK) {
+      this.agonesSDK.shutdown().then(() => {
+        process.exit(0);
+      })
+    }
   }
 }
