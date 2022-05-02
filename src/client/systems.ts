@@ -153,8 +153,8 @@ export class TransformSmoothingSystem extends AbstractSimpleSystem {
       return
     }
 
-    if (transform && transformSync) {
-      const time = Date.now() - this.networkDelay
+    if (transform && transformSync && transformSync.transformBuffer.length > 0) {
+      const time = (transformSync.transformBuffer[transformSync.transformBuffer.length - 1].time + (Date.now() - transformSync.clientTime)) - this.networkDelay
 
       // find the last and the next position in the buffer
       let lastPosIndex = -1;

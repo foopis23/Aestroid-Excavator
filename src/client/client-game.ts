@@ -29,7 +29,7 @@ export class ClientGame {
       new PhysicsSystem(),
       new CollisionSystem(),
       new BoundsSystem({ x: 0, y: 0, w: BASE_RESOLUTION.x, h: BASE_RESOLUTION.y }),
-      new TransformSmoothingSystem(200),
+      new TransformSmoothingSystem(100),
       new ClientPredictionSystem(),
       new GraphicsSystem(),
       new InventoryDisplaySystem(),
@@ -116,6 +116,7 @@ export class ClientGame {
             rotation: data.rotation,
           }
         })
+        transformSync.clientTime = Date.now()
       }
     }
   }

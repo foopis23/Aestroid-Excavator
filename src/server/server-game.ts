@@ -27,7 +27,7 @@ export class ServerGame {
       new PhysicsSystem(),
       new CollisionSystem(),
       new TriggerSystem(serverSocket),
-      new TransformSyncSystem(1 / 15, serverSocket),
+      new TransformSyncSystem(1 / 30, serverSocket),
       // TODO: hook up with configurable map size
       new BoundsSystem({ x: 0, y: 0, w: 1440, h: 1080 }),
       new HealthSystem(serverSocket),
@@ -36,8 +36,8 @@ export class ServerGame {
       new TimerEndGameSystem(serverEngine),
 
       // less important sync systems run last and at a slower sync rate
-      new SyncHealthSystem(1/5, serverSocket),
-      new SyncInventorySystem(1/5, serverSocket),
+      new SyncHealthSystem(1/2, serverSocket),
+      new SyncInventorySystem(1/2, serverSocket),
       new TimerSyncSystem(1, serverSocket),
       new LifetimeSystem(serverSocket)
     );
