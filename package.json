@@ -22,6 +22,7 @@
   "dependencies": {
     "@google-cloud/agones-sdk": "^1.22.0",
     "dotenv-defaults": "^5.0.0",
+    "petite-vue": "^0.4.1",
     "pixi.js": "^6.2.2",
     "simple-game-math": "^1.0.2",
     "simple-game-physics": "^1.0.3",
