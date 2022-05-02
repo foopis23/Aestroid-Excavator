@@ -148,6 +148,12 @@ const app = createApp({
       return winner
     }, this.afterGameReport[0])
 
+    const isTie = this.afterGameReport.every(player => player.score === winner.score)
+
+    if (isTie) {
+      return 'Tie!'
+    }
+
     if (winner.entityId === this.lastPlayerId) {
       return 'You won!'
     } else {
