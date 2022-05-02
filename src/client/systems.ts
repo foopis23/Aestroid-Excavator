@@ -209,7 +209,12 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
 
     // if we don't have a transform or a transform sync component, we can't do client prediction
     if (inputComponent && transform && transformSync) {
-      transformSync?.localTransformBuffer.push({value: {position: transform.position, rotation: transform.rotation}, time: Date.now()})
+      transformSync?.localTransformBuffer.push(
+        {
+          value: {position: transform.position, rotation: transform.rotation},
+          time: transformSync.serverTime + (Date.now() - transformSync.clientTime)
+        }
+      )
 
       // if we don't have any server data, just return
       if (transformSync.transformBuffer.length < 1) {
@@ -230,8 +235,8 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
       inputComponent.inputBuffer = inputComponent.inputBuffer.filter(input => input.time > lastTransform.time);
 
       // if the distance between the last transform and the closest transform in history is too small, just return
-      const errorTolerance = 20 + 10 * Math.abs(lastTransform.time - closestTransformInHistory.time)
-      if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < errorTolerance) {
+      const errorTolerance = 5 + 5 * Math.abs(lastTransform.time - closestTransformInHistory.time)
+      if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < 30) {
         return
       }
 

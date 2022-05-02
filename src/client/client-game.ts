@@ -117,6 +117,7 @@ export class ClientGame {
           }
         })
         transformSync.clientTime = Date.now()
+        transformSync.serverTime = data.time;
       }
     }
   }
