@@ -235,7 +235,6 @@ export class ClientPredictionSystem extends AbstractSimpleSystem {
       inputComponent.inputBuffer = inputComponent.inputBuffer.filter(input => input.time > lastTransform.time);
 
       // if the distance between the last transform and the closest transform in history is too small, just return
-      const errorTolerance = 5 + 5 * Math.abs(lastTransform.time - closestTransformInHistory.time)
       if (Vector2.distance(closestTransformInHistory.value.position, lastTransform.value.position) < 30) {
         return
       }
