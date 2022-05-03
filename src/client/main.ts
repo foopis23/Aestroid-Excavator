@@ -98,7 +98,7 @@ const app = createApp({
     }
 
     this.state = 'in-game',
-      new ClientEngine(host, 'ws', portNum)
+      new ClientEngine(host, 'wss', portNum)
   },
   copyToClipboard(e) {
     const buttonEl = e.target as HTMLButtonElement;

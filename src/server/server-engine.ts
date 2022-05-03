@@ -28,16 +28,23 @@ export class ServerEngine {
     this.state = ServerState.LOBBY
     this.playerCount = 0;
     if (useSSL) {
-      this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>
-        (createServer({
+      this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData> (
+        createServer({
           key: readFileSync('/etc/cert/privkey'),
           cert: readFileSync('/etc/cert/fullchain')
-        }));
+        }),
+        {
+          cors: {
+            origin,
+            methods: ['GET', 'POST', 'OPTIONS']
+          }
+        }
+      );
     } else {
       this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
         cors: {
           origin: origin,
-          methods: ['GET', 'POST']
+          methods: ['GET', 'POST', 'OPTIONS']
         }
       })
     }
