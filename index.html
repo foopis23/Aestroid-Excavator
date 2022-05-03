@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.17e50649.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asteroid Excavator</title>
+  <script type="module" crossorigin src="/assets/index.a2589a53.js"></script>
+  <link rel="stylesheet" href="/assets/index.643e903b.css">
+</head>
+
+<body>
+  <div class="menu-app" v-scope @vue:mounted="mounted()">
+    <h1 v-if="state!=='in-game'">Asteroid Excavator</h1>
+    <div class="connecting" v-if="state==='connecting'">
+      <p>Connecting...</p>
+    </div>
+    <div class="main-menu" v-if="state==='main-menu'">
+      <h2>How To Play</h2>
+      <p>Destroy asteroids or attack players to get minerals. The goal the game to have more minerals than your opponent by the end of the timer.</p>
+      <h2>Controls</h2>
+      <p>Use wasd to move, space to shoot, mouse pointer to aim.</p>
+
+      <div class="button-container">
+        <button id="create-room-button" class="button" @click="createRoom">Create Room</button>
+        <button id="join-room-butotn" class="button" @click="joinRoom">Join Room</button>
+        <button id="direct-connect" class="button" @click="directConnect">Direct Connect</button>
+      </div>
+    </div>
+    <div class="creating-room" v-if="state==='creating-room'">
+      <p>Creating room...</p>
+    </div>
+    <div class="waiting-for-players" v-if="state==='waiting-for-players'">
+      <p>Waiting for players...</p>
+      <h2>Invite Link</h2>
+      <div class="link-box">
+        <span class="link">{{baseURL}}?roomId={{roomId}}</span>   
+        <button :data-copy="baseURL + '?roomId=' + roomId" class="inline-button" @click="copyToClipboard">Copy</button>
+      </div>
+      <h2>Room ID</h2>
+      <div class="link-box">
+        <span class="link">{{roomId}}</span>   
+        <button :data-copy="roomId" class="inline-button" @click="copyToClipboard">Copy</button>
+      </div>
+    </div>
+    <div class="waiting-for-game-server" v-if="state==='waiting-for-game-server'">
+      <p>Waiting for game server...</p>
+    </div>
+    <div class="after-game-report" v-if="state==='after-game-report'">
+      <h2>Game Report</h2>
+      <div class="report-box">
+        <p style="font-size: 1.5rem">{{getWonText()}}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(player, index) in afterGameReport">
+              <td>{{player.entityId}}</td>
+              <td>{{player.score}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="button-container">
+        <button class="button" @click="exitAfterGameReport()">Back To Main</button>
+      </div>
+    </div>
+  </div>
+  
+</body>
+
+</html>
