@@ -72,7 +72,7 @@ const app = createApp({
 
     const url = new URL(window.location.href);
     for (const [key, value] of url.searchParams) {
-      if (key === 'code') {
+      if (key === 'roomId') {
         this.joinRoomWithCode(value)
         window.history.replaceState({}, document.title, "/");
         return
