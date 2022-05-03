@@ -97,7 +97,7 @@ const app = createApp({
   },
   onGameServerFound(gs) {
     this.state = 'in-game'
-    new ClientEngine(gs.status.address, 'ws', gs.status.ports[0].port)
+    new ClientEngine(gs.status.address, 'wss', gs.status.ports[0].port)
   },
   directConnect() {
     const response = prompt('Enter game server address:')
