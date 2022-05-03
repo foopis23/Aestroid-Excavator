@@ -2,6 +2,8 @@ import { Server, Socket } from "socket.io";
 import { IClientToServerEvents, IInterServerEvents, IServerToClientEvents, ISocketData } from "../core/net";
 import { ServerGame } from "./server-game";
 import { AgonesSDK } from "@google-cloud/agones-sdk";
+import { createServer } from 'https';
+import { readFileSync } from 'fs';
 
 enum ServerState {
   LOBBY,
@@ -15,15 +17,31 @@ export class ServerEngine {
   protected serverSocket: Server;
   protected healthInterval: NodeJS.Timeout | undefined;
 
-  constructor(port = 9500, origin = "", protected readonly maxPlayers: number = 2, protected readonly serverTickRate = 1000 / 60, protected readonly agonesSDK: AgonesSDK | undefined = undefined) {
+  constructor(
+    port = 9500,
+    origin = "",
+    protected readonly maxPlayers: number = 2,
+    protected readonly serverTickRate = 1000 / 60,
+    protected readonly agonesSDK: AgonesSDK | undefined = undefined,
+    useSSL = false
+  ) {
     this.state = ServerState.LOBBY
     this.playerCount = 0;
-    this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
-      cors: {
-        origin: origin,
-        methods: ['GET', 'POST']
-      }
-    })
+    if (useSSL) {
+      this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>
+        (createServer({
+          key: readFileSync('/etc/cert/privkey'),
+          cert: readFileSync('/etc/cert/fullchain')
+        }));
+    } else {
+      this.serverSocket = new Server<IClientToServerEvents, IServerToClientEvents, IInterServerEvents, ISocketData>({
+        cors: {
+          origin: origin,
+          methods: ['GET', 'POST']
+        }
+      })
+    }
+
 
     this.serverSocket.on('connection', (socket: Socket) => this.onConnect(socket))
     this.serverSocket.listen(port)
