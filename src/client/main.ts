@@ -10,8 +10,19 @@ const app = createApp({
   roomId: null,
   baseURL: window.location.href,
   afterGameReport: null,
+  online: false,
+
   mounted() {
-    socket = io(matchMakingUrl)
+    socket = io(matchMakingUrl, {
+      reconnectionAttempts: 3
+    })
+
+    socket.io.on("reconnect_failed", () => {
+      alert('Failed to connected to Matchmaking Service!')
+      this.state = 'main-menu';
+      this.online = false
+    })
+
     socket.on('connect', () => this.onConnected())
     socket.on('room-created', (roomId) => this.onRoomCreated(roomId))
     socket.on('room-joined', (roomId) => this.onRoomJoined(roomId))
@@ -57,6 +68,7 @@ const app = createApp({
   onConnected() {
     console.log('connected')
     this.state = 'main-menu'
+    this.online = true
 
     const url = new URL(window.location.href);
     for (const [key, value] of url.searchParams) {

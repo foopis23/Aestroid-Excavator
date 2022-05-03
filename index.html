@@ -21,8 +21,8 @@
       <p>Use wasd to move, space to shoot, mouse pointer to aim.</p>
 
       <div class="button-container">
-        <button id="create-room-button" class="button" @click="createRoom">Create Room</button>
-        <button id="join-room-butotn" class="button" @click="joinRoom">Join Room</button>
+        <button v-if="online" id="create-room-button" class="button" @click="createRoom">Create Room</button>
+        <button v-if="online" id="join-room-butotn" class="button" @click="joinRoom">Join Room</button>
         <button id="direct-connect" class="button" @click="directConnect">Direct Connect</button>
       </div>
     </div>
