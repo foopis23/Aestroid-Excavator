@@ -24,5 +24,4 @@
             volumes:
             - name: ssl
               secret:
-                secretName: sslcred
-                optional: false # default setting; "mysecret" must exist
+                secretName: central1sslcred2
