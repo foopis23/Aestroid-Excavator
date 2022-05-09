@@ -3,7 +3,7 @@ import io, { Socket } from 'socket.io-client'
 import { createApp } from '../../node_modules/petite-vue/dist/petite-vue.es'
 
 let socket: Socket | null = null;
-const matchMakingUrl = import.meta.env.VITE_MATCH_MAKING_URL as string ?? 'wss://0.matchmaking.asteroidexcavator.net:10500';
+const matchMakingUrl = import.meta.env.VITE_MATCH_MAKING_URL as string ?? 'wss://0.matchmaking.asteroidexcavator.net';
 
 const app = createApp({
   state: 'connecting',
