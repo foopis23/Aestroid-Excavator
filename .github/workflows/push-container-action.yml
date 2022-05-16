@@ -7,7 +7,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: foopis23/asteroid-excavator
-  PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
 
 jobs:
   build-and-push-image:
@@ -35,9 +34,10 @@ jobs:
 
       - name: Create env file
         run: |
-          echo $PRODUCTION_ENV
           touch .env.local
-          echo $PRODUCTION_ENV > .env.local
+          echo "USE_AGONES=${{secrets.USE_AGONES}}" >> .env.local
+          echo "USE_SSL=${{secrets.USE_SSL}}" >> .env.local
+          echo "VITE_MATCH_MAKING_URL=${{secrets.VITE_MATCH_MAKING_URL}}" >> .env.local
           cat .env.local
 
       - name: Build and push Docker image
