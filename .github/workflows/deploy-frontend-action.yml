@@ -18,7 +18,7 @@ jobs:
         shell: bash
         run: |
           touch .env.local
-          echo "USE_AGONES=$USE_AGONES >> .env.local
+          echo "USE_AGONES=$USE_AGONES" >> .env.local
           echo "USE_SSL=$USE_SSL" >> .env.local
           echo "VITE_MATCH_MAKING_URL=$VITE_MATCH_MAKING_URL" >> .env.local
           cat .env.local
