@@ -33,12 +33,17 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Create env file
+        shell: bash
         run: |
           touch .env.local
-          echo "USE_AGONES=${{secrets.USE_AGONES}}" >> .env.local
-          echo "USE_SSL=${{secrets.USE_SSL}}" >> .env.local
-          echo "VITE_MATCH_MAKING_URL=${{secrets.VITE_MATCH_MAKING_URL}}" >> .env.local
+          echo "USE_AGONES=$USE_AGONES >> .env.local
+          echo "USE_SSL=$USE_SSL" >> .env.local
+          echo "VITE_MATCH_MAKING_URL=$VITE_MATCH_MAKING_URL" >> .env.local
           cat .env.local
+        env:
+          USE_AGONES: ${{ secrets.USE_AGONES }}
+          USE_SSL: ${{ secrets.USE_SSL }}
+          VITE_MATCH_MAKING_URL: ${{ secrets.VITE_MATCH_MAKING_URL }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
