@@ -1,0 +1,9 @@
+.env
+dockerfile
+.DS_Store
+*.local
+.env
+bin
+cert/
+dist/
+fleet_configs.yaml

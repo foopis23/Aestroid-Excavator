@@ -1,0 +1,101 @@
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
+
+button {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+span {
+  line-height: normal;
+}
+
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  overflow: hidden;
+  background-color: #273536;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  width: 100%;;
+  justify-content: center;
+  align-items: center;
+}
+
+.button {
+  background-color: transparent;
+  border: 3px solid #fff;
+  cursor: pointer;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.2s ease-in-out;
+  padding: 0.5rem 3rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  max-width: 30rem;
+}
+
+.button:hover {
+  background-color: #fff;
+  color: #273536;
+}
+
+.menu-app {
+  color: #fff;
+  text-align: center;
+  max-width: 50rem;
+}
+
+.button-container { 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.inline-button {
+  background-color: transparent;
+  border: 2px solid #cecece;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+  text-transform: uppercase;
+  transition: all 0.2s ease-in-out;
+  display: block;
+  padding: 0.5rem;
+  border-left: 0px;
+  display: block;
+}
+
+.inline-button:hover {
+  background-color: #fff;
+  color: #273536;
+}
+
+.link-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.link-box .link {
+  display: block;
+  border: 2px solid #cecece;
+  background: #455c5d;
+  color: rgb(255, 255, 255);
+  padding: 0.5rem;
+}

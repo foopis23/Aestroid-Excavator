@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist/client",
+    "noEmit": true,
+    "module": "es2022",
+    "moduleResolution": "Node"
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/server"
+  ]
+}

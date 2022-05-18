@@ -1,0 +1,27 @@
+- name: asteroid-excavator
+  fleetSpec:
+    replicas: 10
+    template:
+      metadata:
+        name: asteroid-excavator
+        labels:
+          game: asteroid-excavator
+      spec:
+        ports:
+        - name: default
+          containerPort: 9500
+          protocol: TCP
+        template:
+          spec:
+            containers:
+            - name: asteroid-excavator
+              image: ghcr.io/foopis23/asteroid-excavator:main
+              imagePullPolicy: Always
+              volumeMounts:
+              - name: ssl
+                mountPath: "/etc/cert"
+                readOnly: true
+            volumes:
+            - name: ssl
+              secret:
+                secretName: central1sslcred2
