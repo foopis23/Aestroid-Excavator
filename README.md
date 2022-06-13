@@ -1,6 +1,9 @@
 # Aestroid-Excavator
 A WIP multiplayer game written in typescript with pixi.js and websockets
 
+## Server Status
+I shutdown the game servers because it was costing me a furtune. I did this project as a learning experience and payed for all the google cloud infastructure out of pocket. For anyone who did play the demo, I hope you enjoyed it. Thank you.
+
 ## Envoirnment
 Node: 16.14.2<br>
 Browser: Chrome
